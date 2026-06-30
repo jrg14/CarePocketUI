@@ -11,10 +11,10 @@ import { UiButtonComponent } from '../ui-button/ui-button';
 export class UIHeroComponent {
   // Datos que recibe el componente
   @Input() title: string = 'Título principal';
-  @Input() description: string = 'Aquí va una descripción persuasiva para tu usuario.';
+  @Input() description: string = 'Aquí va una descripción persuasiva para el usuario.';
   @Input() imageSrc: string = 'assets/placeholder.png';
-  @Input() primaryBtnText: string = 'Comenzar';
-  @Input() secondaryBtnText: string = 'Saber más';
+  @Input() primaryBtnText: string = 'Texto botón primario';
+  @Input() secondaryBtnText: string = 'Texto botón secundario';
 
   // Eventos que emite hacia el componente padre
   @Output() onPrimaryAction = new EventEmitter<void>();

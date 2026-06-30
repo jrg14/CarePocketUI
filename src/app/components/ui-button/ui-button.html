@@ -4,7 +4,9 @@
   [class]="btnClasses"
   (click)="onClick.emit()">
   
-  <span *ngIf="loading" class="loading loading-spinner"></span>
+  @if (loading) {
+    <span class="loading loading-spinner"></span>
+  }
   
   <ng-content></ng-content>
 </button>

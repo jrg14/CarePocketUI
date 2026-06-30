@@ -1,6 +1,6 @@
 <ion-app>
-  <app-ui-navbar></app-ui-navbar>
-  <app-ui-hero 
+  <app-ui-navbar class="flex flex-1/12"></app-ui-navbar>
+  <app-ui-hero class="flex flex-9/12"
     title="Transforma tus finanzas de trabajo"
     description="La herramienta definitiva para gestionar tus finanzas con sencillez, elegancia y velocidad."
     primaryBtnText="Empezar ahora"
@@ -9,4 +9,5 @@
     (onPrimaryAction)="handlePrimary()"
     (onSecondaryAction)="handleSecondary()">
   </app-ui-hero>
+  <app-ui-footer class="flex flex-2/12"></app-ui-footer>
 </ion-app>
