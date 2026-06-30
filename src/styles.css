@@ -1,0 +1,7 @@
+/* @import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css"; */
+
+@import "tailwindcss";
+@plugin "daisyui"{
+ themes: light --default, dark --prefersdark, cupcake;
+}

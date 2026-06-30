@@ -1,0 +1,15 @@
+<section class="hero min-h-[94vh] bg-base-100">
+  <div class="hero-content text-center flex-col lg:flex-row-reverse gap-10 p-6">
+    <img [src]="imageSrc" class="max-w-sm rounded-box shadow-2xl" />
+    
+    <div class="max-w-md">
+      <h1 class="text-5xl font-bold leading-tight">{{ title }}</h1>
+      <p class="py-6 text-lg text-base-content/80">{{ description }}</p>
+      
+      <div class="flex gap-3 justify-center">
+        <app-ui-button (click)="onPrimaryAction.emit()">{{ primaryBtnText }}</app-ui-button>
+        <app-ui-button variant="ghost" (click)="onSecondaryAction.emit()">{{ secondaryBtnText }}</app-ui-button>
+      </div>
+    </div>
+  </div>
+</section>
