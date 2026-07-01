@@ -1,27 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-
-import { 
-  IonContent, 
-  IonCard, 
-  IonCardHeader, 
-  IonCardTitle, 
-  IonCardContent, 
-  IonButton 
-} from '@ionic/angular/standalone';
+import { Component } from '@angular/core';
+import { IonContent } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-landing',
-  templateUrl: './landing.html',
   standalone: true,
-  imports: [
-    IonContent, 
-    IonButton
-  ]
+  imports: [IonContent],
+  templateUrl: './landing.html',
 })
-export class LandingComponent  implements OnInit {
-
-  constructor() { }
-
-  ngOnInit() {}
-
+export class LandingComponent {
 }

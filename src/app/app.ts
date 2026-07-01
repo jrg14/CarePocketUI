@@ -1,17 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { IonApp } from '@ionic/angular/standalone';
-import { UINavbarComponent } from './components/ui-navbar/ui-navbar';
-import { UIHeroComponent } from './components/ui-hero/ui-hero';
-import { UIFooterComponent } from './components/ui-footer/ui-footer';
+
 @Component({
   selector: 'app-root',
-  imports: [IonApp, UINavbarComponent, UIHeroComponent, UIFooterComponent],
+  imports: [IonApp, RouterOutlet],
   templateUrl: './app.html',
 })
-export class App {
-  protected readonly title = signal('temp-project');
-
-  handlePrimary() { }
-  handleSecondary() { }
-
+export class AppComponent {
 }
