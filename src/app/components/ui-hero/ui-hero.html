@@ -1,84 +1,53 @@
-<section class="grid items-center gap-10 rounded-3xl bg-base-100 p-6 shadow-sm ring-1 ring-base-200 lg:grid-cols-2 lg:p-10">
-  <div class="space-y-6">
-    <app-ui-badge variant="primary" size="sm">{{ eyebrow }}</app-ui-badge>
+<section
+  [ngClass]="heroClasses"
+  [style.background-image]="imageSrc ? heroStyle['backgroundImage'] : null"
+>
+  @if (imageSrc) {
+    <div [ngClass]="['hero-overlay', imageOverlayClass]"></div>
+  } @else {
+    <div class="hero-overlay bg-base-300/60"></div>
+  }
 
-    <div class="space-y-4">
-      <h1 class="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
-        {{ title }}
-      </h1>
-      <p class="max-w-xl text-lg leading-8 text-base-content/70">
-        {{ description }}
-      </p>
-    </div>
+  <div [ngClass]="contentClasses">
+    <div [ngClass]="contentGridClasses">
+      <div class="space-y-6" [class.mx-auto]="centered">
+        @if (eyebrow) {
+          <p class="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            {{ eyebrow }}
+          </p>
+        }
 
-    <div class="flex flex-wrap gap-3">
-      <app-ui-button (onClick)="onPrimaryAction.emit()">
-        {{ primaryBtnText }}
-      </app-ui-button>
-      <app-ui-button variant="ghost" (onClick)="onSecondaryAction.emit()">
-        {{ secondaryBtnText }}
-      </app-ui-button>
-    </div>
-
-    <div class="grid gap-2 sm:grid-cols-2">
-      @for (highlight of highlights; track highlight) {
-        <div class="flex items-center gap-2 text-sm text-base-content/70">
-          <span class="badge badge-success badge-sm">✓</span>
-          <span>{{ highlight }}</span>
-        </div>
-      }
-    </div>
-  </div>
-
-  <div class="overflow-hidden rounded-3xl border border-base-200 bg-base-200">
-    @if (imageSrc) {
-      <img
-        [src]="imageSrc"
-        [alt]="imageAlt || title"
-        class="h-full min-h-[22rem] w-full object-cover"
-      />
-    } @else {
-      <div class="grid min-h-[22rem] gap-4 p-6 sm:p-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-base-content/60">Sistema visual</p>
-            <p class="text-2xl font-bold">Listo para crecer</p>
-          </div>
-          <span class="badge badge-primary badge-lg">daisyUI</span>
+        <div class="space-y-4">
+          <h1 class="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+            {{ title }}
+          </h1>
+          <p class="max-w-xl text-base leading-7 sm:text-lg">
+            {{ description }}
+          </p>
         </div>
 
-        <div class="stats stats-vertical bg-base-100 shadow-sm lg:stats-horizontal">
-          <div class="stat">
-            <div class="stat-title">Componentes</div>
-            <div class="stat-value text-primary">08</div>
-            <div class="stat-desc">Botón, tarjeta, inputs y más</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">Consistencia</div>
-            <div class="stat-value text-secondary">Alta</div>
-            <div class="stat-desc">Mismo ritmo visual en toda la app</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">Velocidad</div>
-            <div class="stat-value text-accent">Rápida</div>
-            <div class="stat-desc">Menos decisiones repetidas</div>
-          </div>
+        <div class="flex flex-wrap gap-3" [class.justify-center]="centered">
+          @if (primaryBtnText) {
+            <app-ui-button (onClick)="onPrimaryAction.emit()">
+              {{ primaryBtnText }}
+            </app-ui-button>
+          }
+
+          @if (secondaryBtnText) {
+            <app-ui-button variant="ghost" (onClick)="onSecondaryAction.emit()">
+              {{ secondaryBtnText }}
+            </app-ui-button>
+          }
         </div>
 
-        <div class="rounded-2xl bg-base-100 p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="avatar placeholder">
-              <div class="w-12 rounded-full bg-primary text-primary-content">
-                <span>CP</span>
-              </div>
-            </div>
-            <div>
-              <p class="font-semibold">CarePocket</p>
-              <p class="text-sm text-base-content/60">Componentes pensados para reutilizarse</p>
-            </div>
+        @if (highlights.length) {
+          <div class="flex flex-wrap gap-2" [class.justify-center]="centered">
+            @for (highlight of highlights; track highlight) {
+              <span class="badge badge-neutral badge-outline">{{ highlight }}</span>
+            }
           </div>
-        </div>
+        }
       </div>
-    }
+    </div>
   </div>
 </section>
