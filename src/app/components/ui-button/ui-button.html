@@ -1,12 +1,13 @@
-<button 
+<button
   [type]="type"
   [disabled]="disabled || loading"
   [class]="btnClasses"
-  (click)="onClick.emit()">
-  
+  [attr.aria-busy]="loading"
+  [attr.aria-disabled]="disabled || loading"
+  (click)="handleClick()">
   @if (loading) {
     <span class="loading loading-spinner"></span>
   }
-  
+
   <ng-content></ng-content>
 </button>

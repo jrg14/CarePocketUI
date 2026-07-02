@@ -1,0 +1,23 @@
+<section [attr.id]="id" class="space-y-6">
+  <div class="space-y-3" [class.mx-auto]="centered" [class.max-w-3xl]="!centered" [class.text-center]="centered">
+    @if (eyebrow) {
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+        {{ eyebrow }}
+      </p>
+    }
+
+    @if (title) {
+      <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+        {{ title }}
+      </h2>
+    }
+
+    @if (description) {
+      <p class="text-base leading-7 text-base-content/70">
+        {{ description }}
+      </p>
+    }
+  </div>
+
+  <ng-content></ng-content>
+</section>

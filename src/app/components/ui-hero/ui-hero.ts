@@ -1,31 +1,25 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { UiBadgeComponent } from '../ui-badge/ui-badge';
 import { UiButtonComponent } from '../ui-button/ui-button';
 
 @Component({
   selector: 'app-ui-hero',
   standalone: true,
-  imports: [CommonModule, UiButtonComponent],
-  templateUrl: './ui-hero.html'
+  imports: [CommonModule, UiBadgeComponent, UiButtonComponent],
+  templateUrl: './ui-hero.html',
 })
-export class UIHeroComponent {
-  // Datos que recibe el componente
-  @Input() title: string = 'Título principal';
-  @Input() description: string = 'Aquí va una descripción persuasiva para el usuario.';
-  @Input() imageSrc: string = 'assets/placeholder.png';
-  @Input() primaryBtnText: string = 'Texto botón primario';
-  @Input() secondaryBtnText: string = 'Texto botón secundario';
+export class UiHeroComponent {
+  @Input() eyebrow = '';
+  @Input() title = '';
+  @Input() description = '';
+  @Input() imageSrc = '';
+  @Input() imageAlt = '';
+  @Input() primaryBtnText = '';
+  @Input() secondaryBtnText = '';
+  @Input() highlights: ReadonlyArray<string> = ['','','',];
 
-  // Eventos que emite hacia el componente padre
   @Output() onPrimaryAction = new EventEmitter<void>();
   @Output() onSecondaryAction = new EventEmitter<void>();
-
-  // Métodos que disparan los eventos
-  handlePrimary() {
-    this.onPrimaryAction.emit();
-  }
-
-  handleSecondary() {
-    this.onSecondaryAction.emit();
-  }
 }

@@ -5,3 +5,22 @@
 @plugin "daisyui"{
  themes: light --default, dark --prefersdark, cupcake;
 }
+
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--fallback-b2, oklch(0.97 0 0));
+  color: var(--fallback-bc, oklch(0.2 0 0));
+}
+
+app-root {
+  display: block;
+  height: 100%;
+  min-height: 100%;
+}

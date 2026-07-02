@@ -1,3 +1,20 @@
-<ion-app>
-  <router-outlet></router-outlet>
-</ion-app>
+<div class="flex min-h-[100dvh] flex-col overflow-hidden bg-base-200 text-base-content">
+  <app-ui-navbar
+    brand="CarePocket"
+    brandHref="/"
+    [links]="navLinks"
+    ctaLabel="Empezar"
+    ctaHref="#simulacion"
+  ></app-ui-navbar>
+
+  <main class="mx-auto flex w-full max-w-7xl flex-1 min-h-0 flex-col gap-16 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+    <router-outlet></router-outlet>
+  </main>
+
+  <app-ui-footer
+    brand="CarePocket"
+    description="Analítica financiera personal para entender hábitos, anticipar escenarios y tomar mejores decisiones."
+    [links]="footerLinks"
+    [socialLinks]="socialLinks"
+  ></app-ui-footer>
+</div>

@@ -1,0 +1,23 @@
+<article [class]="cardClasses">
+  @if (imageSrc) {
+    <figure>
+      <img [src]="imageSrc" [alt]="imageAlt || title" class="h-48 w-full object-cover" />
+    </figure>
+  }
+
+  <div class="card-body">
+    @if (badge) {
+      <app-ui-badge variant="primary" size="sm">{{ badge }}</app-ui-badge>
+    }
+
+    @if (title) {
+      <h3 class="card-title">{{ title }}</h3>
+    }
+
+    @if (description) {
+      <p class="text-sm leading-relaxed text-base-content/70">{{ description }}</p>
+    }
+
+    <ng-content></ng-content>
+  </div>
+</article>

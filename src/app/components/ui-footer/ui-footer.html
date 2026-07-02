@@ -1,18 +1,48 @@
-<footer class="footer footer-center p-10 bg-base-200 text-base-content rounded-t-box">
-  <div class="grid grid-flow-col gap-4">
-    <a class="link link-hover" routerLink="/about">Sobre nosotros</a>
-    <a class="link link-hover" routerLink="/contact">Contacto</a>
-    <a class="link link-hover" routerLink="/privacy">Privacidad</a>
-  </div>
-  
-  <div>
-    <div class="grid grid-flow-col gap-4">
-      <a class="cursor-pointer">Twitter</a>
-      <a class="cursor-pointer">GitHub</a>
+<footer class="border-t border-base-200 bg-base-100">
+  <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.5fr_1fr_1fr] lg:px-8">
+    <div class="space-y-3">
+      <div class="text-xl font-bold tracking-tight text-primary">{{ brand }}</div>
+      <p class="max-w-md text-sm leading-6 text-base-content/70">
+        {{ description }}
+      </p>
+    </div>
+
+    <div>
+      <h3 class="footer-title">Enlaces</h3>
+      <div class="flex flex-col gap-2">
+        @for (link of links; track link.href) {
+          <a
+            class="link link-hover"
+            [attr.href]="link.href"
+            [attr.target]="link.external ? '_blank' : null"
+            [attr.rel]="link.external ? 'noreferrer noopener' : null"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </div>
+    </div>
+
+    <div>
+      <h3 class="footer-title">Redes</h3>
+      <div class="flex flex-col gap-2">
+        @for (link of socialLinks; track link.href) {
+          <a
+            class="link link-hover"
+            [attr.href]="link.href"
+            [attr.target]="link.external ? '_blank' : null"
+            [attr.rel]="link.external ? 'noreferrer noopener' : null"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </div>
     </div>
   </div>
-  
-  <div>
-    <p>Copyright © {{ currentYear }} - Todos los derechos reservados</p>
+
+  <div class="border-t border-base-200">
+    <div class="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 text-sm text-base-content/60 sm:px-6 lg:px-8">
+      <p>© {{ currentYear }} {{ brand }}. Todos los derechos reservados.</p>
+    </div>
   </div>
 </footer>

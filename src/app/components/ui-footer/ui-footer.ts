@@ -1,11 +1,22 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
+
+export interface UIFooterLink {
+  label: string;
+  href: string;
+  external?: boolean;
+}
 
 @Component({
   selector: 'app-ui-footer',
   standalone: true,
-  templateUrl: './ui-footer.html'
+  imports: [CommonModule],
+  templateUrl: './ui-footer.html',
 })
 export class UIFooterComponent {
-  // Obtenemos el año automáticamente para que siempre esté actualizado
-  currentYear: number = new Date().getFullYear();
+  @Input() brand = 'CarePocket';
+  @Input() description = 'Componentes daisyUI para mantener una estética uniforme en toda la app.';
+  @Input() links: ReadonlyArray<UIFooterLink> = [];
+  @Input() socialLinks: ReadonlyArray<UIFooterLink> = [];
+  @Input() currentYear = new Date().getFullYear();
 }
