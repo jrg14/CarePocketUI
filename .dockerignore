@@ -1,0 +1,10 @@
+node_modules
+dist
+out-tsc
+.angular
+.pnpm-store
+.git
+.vscode
+coverage
+tmp
+*.log
