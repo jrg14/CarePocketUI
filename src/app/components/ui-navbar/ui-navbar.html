@@ -1,26 +1,68 @@
 <header [class.sticky]="sticky" class="top-0 z-50">
   <div class="navbar border-b border-base-200 bg-base-100/95 px-4 backdrop-blur md:px-6">
-    <div class="navbar-start">
-      <button class="btn btn-square btn-ghost">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="size-6"
+    <div class="navbar-start gap-2">
+      <div class="dropdown lg:hidden">
+        <div tabindex="0" role="button" class="btn btn-square btn-ghost" aria-label="Abrir menú">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+            />
+          </svg>
+        </div>
+        <ul
+          tabindex="-1"
+          class="menu dropdown-content z-50 mt-3 w-72 rounded-box bg-base-100 p-2 shadow"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-          />
-        </svg>
-      </button>
-      <a
-        [attr.href]="brandHref"
-        class="btn btn-ghost text-xl font-bold tracking-tight text-primary"
-      >
+          @for (link of links; track link.href) {
+            <li>
+              @if (link.external || !link.href.startsWith('/')) {
+                <a
+                  [attr.href]="link.href"
+                  [attr.target]="link.external ? '_blank' : null"
+                  [attr.rel]="link.external ? 'noreferrer noopener' : null"
+                >
+                  {{ link.label }}
+                </a>
+              } @else {
+                <a [routerLink]="link.href" [fragment]="link.fragment">
+                  {{ link.label }}
+                </a>
+              }
+            </li>
+          }
+
+          <li class="menu-title">
+            <span>Acceso</span>
+          </li>
+
+          @if (authUser) {
+            <li>
+              <a [routerLink]="dashboardHref">Dashboard</a>
+            </li>
+            <li>
+              <button type="button" [disabled]="authBusy" (click)="logout.emit()">Cerrar sesión</button>
+            </li>
+          } @else {
+            <li>
+              <a [routerLink]="loginHref">Iniciar sesión</a>
+            </li>
+            <li>
+              <a [routerLink]="registerHref">Crear cuenta</a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <a [routerLink]="brandHref" class="btn btn-ghost text-xl font-bold tracking-tight text-primary">
         {{ brand }}
       </a>
     </div>
@@ -29,52 +71,78 @@
       <ul class="menu menu-horizontal px-1">
         @for (link of links; track link.href) {
           <li>
-            <a
-              [attr.href]="link.href"
-              [attr.target]="link.external ? '_blank' : null"
-              [attr.rel]="link.external ? 'noreferrer noopener' : null"
-            >
-              {{ link.label }}
-            </a>
+            @if (link.external || !link.href.startsWith('/')) {
+              <a
+                [attr.href]="link.href"
+                [attr.target]="link.external ? '_blank' : null"
+                [attr.rel]="link.external ? 'noreferrer noopener' : null"
+              >
+                {{ link.label }}
+              </a>
+            } @else {
+              <a [routerLink]="link.href" [fragment]="link.fragment">
+                {{ link.label }}
+              </a>
+            }
           </li>
         }
       </ul>
     </div>
 
-    <div class="navbar-end">
-      <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-          <div class="w-10 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-              />
-            </svg>
+    <div class="navbar-end gap-2">
+      @if (authUser) {
+        <div class="hidden md:block">
+          <div class="rounded-2xl bg-base-200 px-3 py-2">
+            <p class="text-sm font-semibold">{{ authUser.fullName }}</p>
+            <p class="text-xs text-base-content/60">{{ authUser.email }}</p>
           </div>
         </div>
-        <ul
-          tabindex="-1"
-          class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
-        >
-          <li>
-            <a class="justify-between">
-              Profile
-              <span class="badge">New</span>
-            </a>
-          </li>
-          <li><a>Settings</a></li>
-          <li><a>Logout</a></li>
-        </ul>
-      </div>
+
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn btn-ghost gap-3">
+            <div class="avatar placeholder">
+              <div class="w-10 rounded-full bg-primary text-primary-content">
+                <span class="text-sm font-bold">{{ userInitials }}</span>
+              </div>
+            </div>
+            <div class="hidden sm:block text-left">
+              <p class="text-sm font-semibold">{{ authUser.fullName }}</p>
+              <p class="text-xs text-base-content/60">{{ authUser.email }}</p>
+            </div>
+          </div>
+          <ul
+            tabindex="-1"
+            class="menu dropdown-content menu-sm z-50 mt-3 w-56 rounded-box bg-base-100 p-2 shadow"
+          >
+            <li>
+              <a [routerLink]="dashboardHref">Dashboard</a>
+            </li>
+            <li>
+              <button type="button" [disabled]="authBusy" (click)="logout.emit()">Cerrar sesión</button>
+            </li>
+          </ul>
+        </div>
+      } @else {
+        @if (secondaryCtaLabel && secondaryCtaHref) {
+          <a
+            [attr.href]="secondaryCtaExternal ? secondaryCtaHref : null"
+            [routerLink]="secondaryCtaExternal ? null : secondaryCtaHref"
+            class="btn btn-ghost btn-sm"
+          >
+            {{ secondaryCtaLabel }}
+          </a>
+        }
+
+        @if (ctaLabel && ctaHref) {
+          <a
+            [attr.href]="ctaExternal ? ctaHref : null"
+            [routerLink]="ctaExternal ? null : ctaHref"
+            class="btn btn-primary btn-sm"
+          >
+            {{ ctaLabel }}
+          </a>
+        }
+      }
     </div>
   </div>
 </header>
