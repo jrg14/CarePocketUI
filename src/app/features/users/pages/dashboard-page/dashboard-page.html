@@ -1,90 +1,247 @@
 <div class="space-y-8">
-  <section id="resumen" class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-    <app-ui-card [title]="welcomeTitle()" [description]="welcomeDescription()" [hoverable]="false">
-      <div class="grid gap-4 sm:grid-cols-3">
-        <div class="rounded-2xl bg-base-200 p-4">
-          <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">Estado</p>
-          <p class="mt-2 text-lg font-semibold text-success">Autenticado</p>
+  <section class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+    <div class="rounded-3xl border border-base-200 bg-gradient-to-br from-base-100 via-base-100 to-primary/5 p-6 shadow-sm sm:p-8">
+      <div class="space-y-5">
+        <app-ui-badge variant="primary">Resumen financiero</app-ui-badge>
+
+        <div class="space-y-3">
+          <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">
+            {{ welcomeTitle() }}
+          </h1>
+          <p class="max-w-3xl text-base leading-7 text-base-content/70">
+            {{ welcomeDescription() }}
+          </p>
         </div>
-        <div class="rounded-2xl bg-base-200 p-4">
-          <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">Perfil</p>
-          <p class="mt-2 text-lg font-semibold">{{ user()?.fullName || 'Cargando...' }}</p>
+
+        <div class="flex flex-wrap gap-2">
+          @for (period of periodOptions; track period.days) {
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="selectedPeriodDays() === period.days"
+              [class.btn-ghost]="selectedPeriodDays() !== period.days"
+              [disabled]="loading()"
+              (click)="selectPeriod(period.days)"
+            >
+              {{ period.label }}
+            </button>
+          }
+
+          <app-ui-button variant="ghost" size="sm" [loading]="loading()" (onClick)="refresh()">
+            Actualizar
+          </app-ui-button>
         </div>
-        <div class="rounded-2xl bg-base-200 p-4">
-          <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">Verificación</p>
-          <p class="mt-2 text-lg font-semibold">{{ user()?.isVerified ? 'Verificado' : 'Pendiente' }}</p>
+
+        <div class="flex flex-wrap gap-2">
+          @for (badge of heroBadges(); track badge.label) {
+            <app-ui-badge [variant]="badge.variant">{{ badge.label }}</app-ui-badge>
+          }
+        </div>
+
+        <div class="rounded-2xl bg-base-200/80 p-4 text-sm leading-6 text-base-content/70">
+          <p class="font-medium text-base-content">{{ periodLabel() }}</p>
+          <p>{{ comparisonLabel() }}</p>
         </div>
       </div>
+    </div>
 
-      <div class="mt-6 flex flex-wrap gap-3">
-        <a href="#movimientos" class="btn btn-primary">Explorar features</a>
-        <app-ui-button variant="ghost" [loading]="loading()" (onClick)="logout()">Cerrar sesión</app-ui-button>
-      </div>
-    </app-ui-card>
-
-    <app-ui-card title="Acceso rápido" description="Empieza por la feature que necesites sin volver a la landing.">
-      <div class="grid gap-3 sm:grid-cols-2">
-        @for (action of quickActions; track action.title) {
-          <a
-            [attr.href]="action.href"
-            class="rounded-2xl border border-base-300 bg-base-200 p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-base-300/60"
-          >
-            <p class="font-semibold text-base-content">{{ action.title }}</p>
-            <p class="mt-1 text-sm leading-6 text-base-content/70">{{ action.description }}</p>
-          </a>
+    @if (summary()) {
+      <div class="stats stats-vertical bg-base-100 shadow-sm xl:stats-horizontal">
+        @for (stat of overviewStats(); track stat.title) {
+          <div class="stat">
+            <div class="stat-title">{{ stat.title }}</div>
+            <div [ngClass]="['stat-value', 'text-2xl', 'sm:text-3xl', stat.valueClass]">{{ stat.value }}</div>
+            <div class="stat-desc">{{ stat.description }}</div>
+          </div>
         }
       </div>
-    </app-ui-card>
-  </section>
-
-  <section class="grid gap-6 md:grid-cols-2">
-    @for (feature of featureSections; track feature.id) {
-      <article [id]="feature.id">
-        <app-ui-card [badge]="feature.badge" [title]="feature.title" [description]="feature.description">
-          <div class="space-y-3">
-            @for (highlight of feature.highlights; track highlight) {
-              <div class="flex items-start gap-3 rounded-2xl bg-base-200 p-4 text-sm text-base-content/70">
-                <span class="badge badge-primary badge-sm mt-0.5">Core</span>
-                <span>{{ highlight }}</span>
-              </div>
-            }
-          </div>
-
-          <div class="card-actions mt-4">
-            <a [attr.href]="'#resumen'" class="btn btn-ghost btn-sm">Volver arriba</a>
-          </div>
-        </app-ui-card>
-      </article>
+    } @else {
+      <div class="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+        <div class="flex h-full min-h-[18rem] flex-col items-center justify-center gap-3 text-center">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+          <p class="text-sm font-medium text-base-content">Cargando el resumen del dashboard...</p>
+          <p class="max-w-sm text-sm leading-6 text-base-content/60">
+            Estamos llamando a <code>/api/v1/ledgers/summary</code> para construir tu resumen general.
+          </p>
+        </div>
+      </div>
     }
   </section>
 
-  <section class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-    <app-ui-card title="Detalles de la sesión" description="Información cargada desde /api/v1/users/me.">
-      <div class="space-y-3 text-sm text-base-content/70">
-        <div class="flex items-center justify-between gap-4 rounded-2xl bg-base-200 px-4 py-3">
-          <span>Correo</span>
-          <span class="font-medium text-base-content">{{ user()?.email || '...' }}</span>
-        </div>
-        <div class="flex items-center justify-between gap-4 rounded-2xl bg-base-200 px-4 py-3">
-          <span>ID</span>
-          <span class="font-medium text-base-content">{{ user()?.id || '...' }}</span>
-        </div>
-        <div class="flex items-center justify-between gap-4 rounded-2xl bg-base-200 px-4 py-3">
-          <span>Acceso</span>
-          <span class="font-medium text-base-content">{{ user()?.isActive ? 'Activo' : 'Inactivo' }}</span>
-        </div>
-      </div>
-    </app-ui-card>
+  @if (error()) {
+    <div role="alert" class="alert alert-error">
+      <span>{{ error() }}</span>
+    </div>
+  }
 
-    <app-ui-card title="Siguiente paso" description="La sesión ya queda conectada con el backend.">
-      <div class="space-y-3 text-sm leading-6 text-base-content/70">
-        <p>Desde aquí podemos enchufar el análisis real de movimientos, presupuestos y recomendaciones por usuario.</p>
-        <p>El navbar ya apunta a features internas para que la experiencia sea más de aplicación y menos de landing.</p>
-      </div>
-      <div class="card-actions mt-4">
-        <app-ui-badge variant="success">JWT listo</app-ui-badge>
-        <app-ui-badge variant="neutral">/users/me</app-ui-badge>
-      </div>
-    </app-ui-card>
-  </section>
+  @if (summary(); as currentSummary) {
+    <section class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <app-ui-card
+        badge="Cuentas"
+        title="Top cuentas"
+        description="Las cuentas con mayor saldo del periodo aparecen primero."
+      >
+        @if (topAccounts().length) {
+          <div class="space-y-4">
+            @for (account of topAccounts(); track account.accountId) {
+              <div class="space-y-2 rounded-2xl bg-base-200 p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="font-semibold text-base-content">{{ account.accountName }}</p>
+                    <p class="text-xs uppercase tracking-[0.16em] text-base-content/50">
+                      {{ account.transactionCount }} movimientos
+                    </p>
+                  </div>
+                  <p [ngClass]="['text-right', 'text-sm', 'font-semibold', account.valueClass]">
+                    {{ account.balanceLabel }}
+                  </p>
+                </div>
+                <progress class="progress progress-primary" [value]="account.progress" max="100"></progress>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="alert alert-info">
+            <span>No hay cuentas activas en este periodo.</span>
+          </div>
+        }
+      </app-ui-card>
+
+      <app-ui-card
+        badge="Tendencias"
+        title="Lectura rápida"
+        description="La proyección y el cambio frente al periodo anterior te ayudan a detectar desviaciones."
+      >
+        <div class="stats stats-vertical bg-base-200 shadow-sm">
+          <div class="stat">
+            <div class="stat-title">Cambio de ingresos</div>
+            <div class="stat-value text-success">{{ formatSignedPercent(currentSummary.trends.incomeChangePct) }}</div>
+            <div class="stat-desc">Comparado con el periodo anterior</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Cambio de gastos</div>
+            <div class="stat-value text-error">{{ formatSignedPercent(currentSummary.trends.expenseChangePct) }}</div>
+            <div class="stat-desc">Comparado con el periodo anterior</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Proyección del siguiente periodo</div>
+            <div
+              class="stat-value"
+              [class.text-success]="currentSummary.trends.projectedBalanceNextPeriod >= 0"
+              [class.text-error]="currentSummary.trends.projectedBalanceNextPeriod < 0"
+            >
+              {{ formatSignedMoney(currentSummary.trends.projectedBalanceNextPeriod) }}
+            </div>
+            <div class="stat-desc">{{ comparisonLabel() }}</div>
+          </div>
+        </div>
+      </app-ui-card>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-2">
+      <app-ui-card
+        badge="Gasto"
+        title="Gasto por categoría"
+        description="Las categorías con más peso te muestran dónde conviene revisar primero."
+      >
+        @if (expenseCategories().length) {
+          <div class="space-y-4">
+            @for (category of expenseCategories(); track category.categoryId ?? category.categoryName) {
+              <div class="space-y-2 rounded-2xl bg-base-200 p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="font-semibold text-base-content">{{ category.categoryName }}</p>
+                    <p class="text-xs uppercase tracking-[0.16em] text-base-content/50">
+                      {{ category.transactionCount }} movimientos
+                    </p>
+                  </div>
+                  <p class="text-right text-sm font-semibold text-error">{{ category.amountLabel }}</p>
+                </div>
+                <progress class="progress progress-error" [value]="category.progress" max="100"></progress>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="alert alert-info">
+            <span>No hay categorías de gasto para este periodo.</span>
+          </div>
+        }
+      </app-ui-card>
+
+      <app-ui-card
+        badge="Ingreso"
+        title="Ingreso por categoría"
+        description="Así se distribuyen tus entradas de dinero en el periodo seleccionado."
+      >
+        @if (incomeCategories().length) {
+          <div class="space-y-4">
+            @for (category of incomeCategories(); track category.categoryId ?? category.categoryName) {
+              <div class="space-y-2 rounded-2xl bg-base-200 p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="font-semibold text-base-content">{{ category.categoryName }}</p>
+                    <p class="text-xs uppercase tracking-[0.16em] text-base-content/50">
+                      {{ category.transactionCount }} movimientos
+                    </p>
+                  </div>
+                  <p class="text-right text-sm font-semibold text-success">{{ category.amountLabel }}</p>
+                </div>
+                <progress class="progress progress-success" [value]="category.progress" max="100"></progress>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="alert alert-info">
+            <span>No hay categorías de ingreso para este periodo.</span>
+          </div>
+        }
+      </app-ui-card>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-2">
+      <app-ui-card
+        badge="Alertas"
+        title="Señales a vigilar"
+        description="Los avisos se generan a partir de balance, tendencia y concentración de gasto."
+      >
+        @if (alerts().length) {
+          <div class="space-y-3">
+            @for (alert of alerts(); track alert) {
+              <div role="alert" class="alert alert-warning alert-soft">
+                <span>{{ alert }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="alert alert-success alert-soft">
+            <span>No hay alertas activas para este periodo.</span>
+          </div>
+        }
+      </app-ui-card>
+
+      <app-ui-card
+        badge="Recomendaciones"
+        title="Siguiente mejor acción"
+        description="Pequeñas decisiones hoy pueden mejorar la foto del próximo periodo."
+      >
+        @if (recommendations().length) {
+          <div class="space-y-3">
+            @for (recommendation of recommendations(); track recommendation) {
+              <div role="alert" class="alert alert-info alert-soft">
+                <span>{{ recommendation }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="alert alert-info alert-soft">
+            <span>Todavía no hay recomendaciones para este periodo.</span>
+          </div>
+        }
+      </app-ui-card>
+    </section>
+  }
+
+  <div class="flex justify-end">
+    <app-ui-button variant="ghost" [loading]="authBusy()" (onClick)="logout()">Cerrar sesión</app-ui-button>
+  </div>
 </div>
