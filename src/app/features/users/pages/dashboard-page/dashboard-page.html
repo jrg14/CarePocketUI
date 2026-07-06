@@ -1,0 +1,90 @@
+<div class="space-y-8">
+  <section id="resumen" class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+    <app-ui-card [title]="welcomeTitle()" [description]="welcomeDescription()" [hoverable]="false">
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="rounded-2xl bg-base-200 p-4">
+          <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">Estado</p>
+          <p class="mt-2 text-lg font-semibold text-success">Autenticado</p>
+        </div>
+        <div class="rounded-2xl bg-base-200 p-4">
+          <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">Perfil</p>
+          <p class="mt-2 text-lg font-semibold">{{ user()?.fullName || 'Cargando...' }}</p>
+        </div>
+        <div class="rounded-2xl bg-base-200 p-4">
+          <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">Verificación</p>
+          <p class="mt-2 text-lg font-semibold">{{ user()?.isVerified ? 'Verificado' : 'Pendiente' }}</p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="#movimientos" class="btn btn-primary">Explorar features</a>
+        <app-ui-button variant="ghost" [loading]="loading()" (onClick)="logout()">Cerrar sesión</app-ui-button>
+      </div>
+    </app-ui-card>
+
+    <app-ui-card title="Acceso rápido" description="Empieza por la feature que necesites sin volver a la landing.">
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (action of quickActions; track action.title) {
+          <a
+            [attr.href]="action.href"
+            class="rounded-2xl border border-base-300 bg-base-200 p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-base-300/60"
+          >
+            <p class="font-semibold text-base-content">{{ action.title }}</p>
+            <p class="mt-1 text-sm leading-6 text-base-content/70">{{ action.description }}</p>
+          </a>
+        }
+      </div>
+    </app-ui-card>
+  </section>
+
+  <section class="grid gap-6 md:grid-cols-2">
+    @for (feature of featureSections; track feature.id) {
+      <article [id]="feature.id">
+        <app-ui-card [badge]="feature.badge" [title]="feature.title" [description]="feature.description">
+          <div class="space-y-3">
+            @for (highlight of feature.highlights; track highlight) {
+              <div class="flex items-start gap-3 rounded-2xl bg-base-200 p-4 text-sm text-base-content/70">
+                <span class="badge badge-primary badge-sm mt-0.5">Core</span>
+                <span>{{ highlight }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="card-actions mt-4">
+            <a [attr.href]="'#resumen'" class="btn btn-ghost btn-sm">Volver arriba</a>
+          </div>
+        </app-ui-card>
+      </article>
+    }
+  </section>
+
+  <section class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+    <app-ui-card title="Detalles de la sesión" description="Información cargada desde /api/v1/users/me.">
+      <div class="space-y-3 text-sm text-base-content/70">
+        <div class="flex items-center justify-between gap-4 rounded-2xl bg-base-200 px-4 py-3">
+          <span>Correo</span>
+          <span class="font-medium text-base-content">{{ user()?.email || '...' }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 rounded-2xl bg-base-200 px-4 py-3">
+          <span>ID</span>
+          <span class="font-medium text-base-content">{{ user()?.id || '...' }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 rounded-2xl bg-base-200 px-4 py-3">
+          <span>Acceso</span>
+          <span class="font-medium text-base-content">{{ user()?.isActive ? 'Activo' : 'Inactivo' }}</span>
+        </div>
+      </div>
+    </app-ui-card>
+
+    <app-ui-card title="Siguiente paso" description="La sesión ya queda conectada con el backend.">
+      <div class="space-y-3 text-sm leading-6 text-base-content/70">
+        <p>Desde aquí podemos enchufar el análisis real de movimientos, presupuestos y recomendaciones por usuario.</p>
+        <p>El navbar ya apunta a features internas para que la experiencia sea más de aplicación y menos de landing.</p>
+      </div>
+      <div class="card-actions mt-4">
+        <app-ui-badge variant="success">JWT listo</app-ui-badge>
+        <app-ui-badge variant="neutral">/users/me</app-ui-badge>
+      </div>
+    </app-ui-card>
+  </section>
+</div>

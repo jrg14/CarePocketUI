@@ -1,0 +1,174 @@
+<div
+  class="relative  overflow-hidden px-4 py-8  sm:px-6 lg:px-8 lg:py-10"
+>
+  <app-ui-card
+    [title]="isLogin() ? 'Iniciar sesión' : 'Crear cuenta'"
+    [description]="
+      isLogin()
+        ? 'Entra con tus credenciales para recuperar tu contexto y continuar.'
+        : 'Crea tu perfil para guardar tus análisis y volver cuando quieras.'
+    "
+    [hoverable]="false"
+  >
+    <div class="space-y-4">
+      @if (registered()) {
+        <div class="alert alert-success">
+          <span>Cuenta creada correctamente. Ya puedes entrar con tus credenciales.</span>
+        </div>
+      }
+
+      @if (authError()) {
+        <div class="alert alert-error">
+          <span>{{ authError() }}</span>
+        </div>
+      }
+
+      @if (isLogin()) {
+        <form class="space-y-4" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Correo electrónico</span>
+            </div>
+            <input
+              class="input input-bordered w-full"
+              type="email"
+              autocomplete="email"
+              formControlName="email"
+              placeholder="tu@correo.com"
+            />
+            @if (loginControlError('email')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{ loginControlError('email') }}</span>
+              </div>
+            }
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Contraseña</span>
+            </div>
+            <input
+              class="input input-bordered w-full"
+              type="password"
+              autocomplete="current-password"
+              formControlName="password"
+              placeholder="••••••••"
+            />
+            @if (loginControlError('password')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{ loginControlError('password') }}</span>
+              </div>
+            }
+          </label>
+
+          <app-ui-button type="submit" [fullWidth]="true" [loading]="authBusy()">
+            Entrar ahora
+          </app-ui-button>
+        </form>
+      } @else {
+        <form class="space-y-4" [formGroup]="registerForm" (ngSubmit)="submitRegister()">
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Nombre completo</span>
+            </div>
+            <input
+              class="input input-bordered w-full"
+              type="text"
+              autocomplete="name"
+              formControlName="fullName"
+              placeholder="Jorge Pérez"
+            />
+            @if (registerControlError('fullName')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  registerControlError('fullName')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Correo electrónico</span>
+            </div>
+            <input
+              class="input input-bordered w-full"
+              type="email"
+              autocomplete="email"
+              formControlName="email"
+              placeholder="tu@correo.com"
+            />
+            @if (registerControlError('email')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{ registerControlError('email') }}</span>
+              </div>
+            }
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Contraseña</span>
+            </div>
+            <input
+              class="input input-bordered w-full"
+              type="password"
+              autocomplete="new-password"
+              formControlName="password"
+              placeholder="mínimo 8 caracteres"
+            />
+            @if (registerControlError('password')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  registerControlError('password')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Confirmar contraseña</span>
+            </div>
+            <input
+              class="input input-bordered w-full"
+              type="password"
+              autocomplete="new-password"
+              formControlName="confirmPassword"
+              placeholder="repite la contraseña"
+            />
+            @if (registerControlError('confirmPassword')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  registerControlError('confirmPassword')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          @if (registerPasswordMismatch()) {
+            <div class="alert alert-error">
+              <span>Las contraseñas no coinciden.</span>
+            </div>
+          }
+
+          <app-ui-button type="submit" [fullWidth]="true" [loading]="authBusy()">
+            Crear cuenta
+          </app-ui-button>
+        </form>
+      }
+
+      <div class="divider my-2"></div>
+
+      <p class="text-sm text-base-content/70">
+        {{ switchText() }}
+        <a
+          [routerLink]="switchHref()"
+          [queryParams]="returnUrl() ? { returnUrl: returnUrl() } : null"
+          class="link link-primary"
+        >
+          {{ switchLabel() }}
+        </a>
+      </p>
+    </div>
+  </app-ui-card>
+</div>
