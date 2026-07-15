@@ -11,6 +11,8 @@ import {
   LedgerSummaryCategoryViewModel,
   LedgerSummaryCategorySchema,
   LedgerSummarySchema,
+  LedgerSummaryTotalsSchema,
+  LedgerSummaryTotalsViewModel,
   LedgerSummaryViewModel,
 } from '../models/ledger-summary.models';
 
@@ -27,6 +29,36 @@ export class LedgerSummaryService {
   readonly summary = computed(() => this.summarySignal());
   readonly loading = computed(() => this.loadingSignal());
   readonly error = computed(() => this.errorSignal());
+
+  createTransaction(
+    accountId: number,
+    payload: {
+      amount: number;
+      currency: string;
+      transaction_type: 'income' | 'expense';
+      transaction_date: string;
+      description: string;
+      transaction_category_id: number;
+    },
+  ): Observable<void> {
+    if (!Number.isInteger(accountId) || accountId <= 0) {
+      return throwError(() => new Error('La cuenta no es válida.'));
+    }
+
+    return this.http.post<void>(this.apiUrl(`/api/v1/ledgers/account/${accountId}/transactions`), payload);
+  }
+
+  createAccount(accountName: string): Observable<void> {
+    const normalizedName = accountName.trim();
+
+    if (!normalizedName) {
+      return throwError(() => new Error('El nombre de la cuenta no puede estar vacío.'));
+    }
+
+    return this.http.post<void>(this.apiUrl(usersApiEndpoints.ledgerAccounts), {
+      account_name: normalizedName,
+    });
+  }
 
   loadSummary(periodDays = 30): Observable<LedgerSummaryViewModel> {
     const boundedPeriodDays = this.normalizePeriodDays(periodDays);
@@ -65,36 +97,8 @@ export class LedgerSummaryService {
 
   private mapSummary(response: LedgerSummarySchema): LedgerSummaryViewModel {
     return {
-      period: {
-        days: response.period.period_days,
-        start: this.toDate(response.period.period_start),
-        end: this.toDate(response.period.period_end),
-        previousStart: this.toDate(response.period.previous_period_start),
-        previousEnd: this.toDate(response.period.previous_period_end),
-      },
-      overview: {
-        totalBalance: this.toNumber(response.overview.total_balance),
-        activeAccountsCount: response.overview.active_accounts_count,
-        transactionsCount: response.overview.transactions_count,
-        incomeTotal: this.toNumber(response.overview.income_total),
-        expenseTotal: this.toNumber(response.overview.expense_total),
-        netFlow: this.toNumber(response.overview.net_flow),
-        averageDailyIncome: this.toNumber(response.overview.average_daily_income),
-        averageDailyExpense: this.toNumber(response.overview.average_daily_expense),
-        lastTransactionAt: response.overview.last_transaction_at
-          ? this.toDate(response.overview.last_transaction_at)
-          : null,
-      },
-      topAccounts: response.top_accounts.map((account) => this.mapAccount(account)),
-      expensesByCategory: response.expenses_by_category.map((category) => this.mapCategory(category)),
-      incomeByCategory: response.income_by_category.map((category) => this.mapCategory(category)),
-      trends: {
-        incomeChangePct: response.trends.income_change_pct,
-        expenseChangePct: response.trends.expense_change_pct,
-        projectedBalanceNextPeriod: this.toNumber(response.trends.projected_balance_next_period),
-      },
-      alerts: response.alerts,
-      recommendations: response.recommendations,
+      totals: this.mapTotals(response.totals),
+      accounts: response.accounts.map((account) => this.mapAccount(account)),
     };
   }
 
@@ -103,7 +107,9 @@ export class LedgerSummaryService {
       accountId: account.account_id,
       accountName: account.account_name,
       balance: this.toNumber(account.balance),
-      transactionCount: account.transaction_count,
+      income: this.toNumber(account.income),
+      expense: this.toNumber(account.expense),
+      expensesByCategory: account.expenses_by_category.map((category) => this.mapCategory(category)),
     };
   }
 
@@ -112,7 +118,15 @@ export class LedgerSummaryService {
       categoryId: category.category_id,
       categoryName: category.category_name,
       amount: this.toNumber(category.amount),
-      transactionCount: category.transaction_count,
+    };
+  }
+
+  private mapTotals(totals: LedgerSummaryTotalsSchema): LedgerSummaryTotalsViewModel {
+    return {
+      balance: this.toNumber(totals.balance),
+      income: this.toNumber(totals.income),
+      expense: this.toNumber(totals.expense),
+      expensesByCategory: totals.expenses_by_category.map((category) => this.mapCategory(category)),
     };
   }
 
@@ -128,12 +142,6 @@ export class LedgerSummaryService {
     const parsed = typeof value === 'number' ? value : Number(value);
 
     return Number.isFinite(parsed) ? parsed : 0;
-  }
-
-  private toDate(value: string): Date {
-    const date = new Date(value);
-
-    return Number.isNaN(date.getTime()) ? new Date(0) : date;
   }
 
   private getErrorMessage(error: unknown, fallback: string): string {

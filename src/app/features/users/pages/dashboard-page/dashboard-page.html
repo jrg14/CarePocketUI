@@ -1,73 +1,4 @@
 <div class="space-y-8">
-  <section class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-    <div class="rounded-3xl border border-base-200 bg-gradient-to-br from-base-100 via-base-100 to-primary/5 p-6 shadow-sm sm:p-8">
-      <div class="space-y-5">
-        <app-ui-badge variant="primary">Resumen financiero</app-ui-badge>
-
-        <div class="space-y-3">
-          <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">
-            {{ welcomeTitle() }}
-          </h1>
-          <p class="max-w-3xl text-base leading-7 text-base-content/70">
-            {{ welcomeDescription() }}
-          </p>
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-          @for (period of periodOptions; track period.days) {
-            <button
-              type="button"
-              class="btn btn-sm"
-              [class.btn-primary]="selectedPeriodDays() === period.days"
-              [class.btn-ghost]="selectedPeriodDays() !== period.days"
-              [disabled]="loading()"
-              (click)="selectPeriod(period.days)"
-            >
-              {{ period.label }}
-            </button>
-          }
-
-          <app-ui-button variant="ghost" size="sm" [loading]="loading()" (onClick)="refresh()">
-            Actualizar
-          </app-ui-button>
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-          @for (badge of heroBadges(); track badge.label) {
-            <app-ui-badge [variant]="badge.variant">{{ badge.label }}</app-ui-badge>
-          }
-        </div>
-
-        <div class="rounded-2xl bg-base-200/80 p-4 text-sm leading-6 text-base-content/70">
-          <p class="font-medium text-base-content">{{ periodLabel() }}</p>
-          <p>{{ comparisonLabel() }}</p>
-        </div>
-      </div>
-    </div>
-
-    @if (summary()) {
-      <div class="stats stats-vertical bg-base-100 shadow-sm xl:stats-horizontal">
-        @for (stat of overviewStats(); track stat.title) {
-          <div class="stat">
-            <div class="stat-title">{{ stat.title }}</div>
-            <div [ngClass]="['stat-value', 'text-2xl', 'sm:text-3xl', stat.valueClass]">{{ stat.value }}</div>
-            <div class="stat-desc">{{ stat.description }}</div>
-          </div>
-        }
-      </div>
-    } @else {
-      <div class="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
-        <div class="flex h-full min-h-[18rem] flex-col items-center justify-center gap-3 text-center">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-          <p class="text-sm font-medium text-base-content">Cargando el resumen del dashboard...</p>
-          <p class="max-w-sm text-sm leading-6 text-base-content/60">
-            Estamos llamando a <code>/api/v1/ledgers/summary</code> para construir tu resumen general.
-          </p>
-        </div>
-      </div>
-    }
-  </section>
-
   @if (error()) {
     <div role="alert" class="alert alert-error">
       <span>{{ error() }}</span>
@@ -75,173 +6,240 @@
   }
 
   @if (summary(); as currentSummary) {
-    <section class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+    <section class="grid gap-6 xl:grid-cols-[0.78fr_1.44fr_0.78fr]">
       <app-ui-card
-        badge="Cuentas"
-        title="Top cuentas"
-        description="Las cuentas con mayor saldo del periodo aparecen primero."
+        badge="Balance cuenta 1"
+        [title]="featuredAccounts()[0]?.accountName || 'Cuenta principal'"
+        description="Esta tarjeta toma el balance de la primera cuenta disponible."
       >
-        @if (topAccounts().length) {
+        @if (featuredAccounts()[0]; as account) {
           <div class="space-y-4">
-            @for (account of topAccounts(); track account.accountId) {
-              <div class="space-y-2 rounded-2xl bg-base-200 p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="font-semibold text-base-content">{{ account.accountName }}</p>
-                    <p class="text-xs uppercase tracking-[0.16em] text-base-content/50">
-                      {{ account.transactionCount }} movimientos
+            <div class="space-y-2">
+              <p [ngClass]="['text-3xl', 'font-black', 'tracking-tight', account.valueClass]">
+                {{ account.balanceLabel }}
+              </p>
+              <p class="text-sm leading-6 text-base-content/60">
+                Ingresos {{ account.incomeLabel }} · Gastos {{ account.expenseLabel }}
+              </p>
+            </div>
+
+            <progress
+              class="progress progress-primary"
+              [value]="account.progress"
+              max="100"
+            ></progress>
+
+            @if (account.expensesByCategory.length) {
+              <div class="space-y-3">
+                <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">
+                  Top categoría
+                </p>
+                <div class="rounded-2xl bg-base-200 p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="font-semibold text-base-content">
+                      {{ account.expensesByCategory[0].categoryName }}
+                    </p>
+                    <p class="text-right text-sm font-semibold text-error">
+                      {{ account.expensesByCategory[0].amountLabel }}
                     </p>
                   </div>
-                  <p [ngClass]="['text-right', 'text-sm', 'font-semibold', account.valueClass]">
-                    {{ account.balanceLabel }}
-                  </p>
                 </div>
-                <progress class="progress progress-primary" [value]="account.progress" max="100"></progress>
               </div>
             }
           </div>
         } @else {
           <div class="alert alert-info">
-            <span>No hay cuentas activas en este periodo.</span>
+            <span>Aún no hay una primera cuenta para mostrar.</span>
           </div>
         }
       </app-ui-card>
 
       <app-ui-card
-        badge="Tendencias"
-        title="Lectura rápida"
-        description="La proyección y el cambio frente al periodo anterior te ayudan a detectar desviaciones."
+        badge="Balance total cuentas"
+        title="Visión general"
+        description="El donut resume ingresos y gastos; el texto central muestra el saldo total."
+        [hoverable]="false"
       >
-        <div class="stats stats-vertical bg-base-200 shadow-sm">
-          <div class="stat">
-            <div class="stat-title">Cambio de ingresos</div>
-            <div class="stat-value text-success">{{ formatSignedPercent(currentSummary.trends.incomeChangePct) }}</div>
-            <div class="stat-desc">Comparado con el periodo anterior</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">Cambio de gastos</div>
-            <div class="stat-value text-error">{{ formatSignedPercent(currentSummary.trends.expenseChangePct) }}</div>
-            <div class="stat-desc">Comparado con el periodo anterior</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">Proyección del siguiente periodo</div>
-            <div
-              class="stat-value"
-              [class.text-success]="currentSummary.trends.projectedBalanceNextPeriod >= 0"
-              [class.text-error]="currentSummary.trends.projectedBalanceNextPeriod < 0"
-            >
-              {{ formatSignedMoney(currentSummary.trends.projectedBalanceNextPeriod) }}
+        <div class="space-y-6">
+          <div class="rounded-[2rem] bg-amber-100/70 p-4 shadow-inner ring-1 ring-amber-200/70">
+            <div class="relative mx-auto max-w-[30rem]">
+              <apx-chart
+                [chart]="balanceChartOptions().chart"
+                [series]="balanceChartOptions().series"
+                [labels]="balanceChartOptions().labels"
+                [colors]="balanceChartOptions().colors"
+                [stroke]="balanceChartOptions().stroke"
+                [dataLabels]="balanceChartOptions().dataLabels"
+                [legend]="balanceChartOptions().legend"
+                [plotOptions]="balanceChartOptions().plotOptions"
+                [tooltip]="balanceChartOptions().tooltip"
+                [responsive]="balanceChartOptions().responsive"
+              ></apx-chart>
+
+              <div
+                class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
+              >
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/45">
+                  Balance total cuentas
+                </p>
+                <p class="mt-2 text-3xl font-black tracking-tight text-base-content">
+                  {{ formatMoney(currentSummary.totals.balance) }}
+                </p>
+                <p class="mt-1 text-sm text-base-content/60">Ingresos - gastos</p>
+              </div>
             </div>
-            <div class="stat-desc">{{ comparisonLabel() }}</div>
+
+            <div class="mt-4 flex flex-wrap justify-center gap-2">
+              <app-ui-badge variant="success"
+                >Ingresos {{ formatMoney(currentSummary.totals.income) }}</app-ui-badge
+              >
+              <app-ui-badge variant="error"
+                >Gastos {{ formatMoney(currentSummary.totals.expense) }}</app-ui-badge
+              >
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-base-100 p-4 shadow-sm ring-1 ring-base-200/80">
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-base-content">Gasto por categoría</h2>
+                <p class="text-sm text-base-content/60">
+                  Las barras reflejan el peso relativo de cada categoría.
+                </p>
+              </div>
+              <app-ui-badge variant="info">Top 5</app-ui-badge>
+            </div>
+
+            @if (expenseCategories().length) {
+              <apx-chart
+                [chart]="expenseChartOptions().chart"
+                [series]="expenseChartOptions().series"
+                [colors]="expenseChartOptions().colors"
+                [plotOptions]="expenseChartOptions().plotOptions"
+                [dataLabels]="expenseChartOptions().dataLabels"
+                [xaxis]="expenseChartOptions().xaxis"
+                [yaxis]="expenseChartOptions().yaxis"
+                [grid]="expenseChartOptions().grid"
+                [tooltip]="expenseChartOptions().tooltip"
+                [legend]="expenseChartOptions().legend"
+                [responsive]="expenseChartOptions().responsive"
+              ></apx-chart>
+            } @else {
+              <div class="alert alert-info">
+                <span>No hay categorías de gasto para este resumen.</span>
+              </div>
+            }
           </div>
         </div>
       </app-ui-card>
-    </section>
 
-    <section class="grid gap-6 xl:grid-cols-2">
       <app-ui-card
-        badge="Gasto"
-        title="Gasto por categoría"
-        description="Las categorías con más peso te muestran dónde conviene revisar primero."
+        badge="Balance cuenta 2"
+        [title]="featuredAccounts()[1]?.accountName || 'Cuenta secundaria'"
+        description="Esta tarjeta toma el balance de la segunda cuenta disponible."
       >
-        @if (expenseCategories().length) {
+        @if (featuredAccounts()[1]; as account) {
           <div class="space-y-4">
-            @for (category of expenseCategories(); track category.categoryId ?? category.categoryName) {
-              <div class="space-y-2 rounded-2xl bg-base-200 p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="font-semibold text-base-content">{{ category.categoryName }}</p>
-                    <p class="text-xs uppercase tracking-[0.16em] text-base-content/50">
-                      {{ category.transactionCount }} movimientos
+            <div class="space-y-2">
+              <p [ngClass]="['text-3xl', 'font-black', 'tracking-tight', account.valueClass]">
+                {{ account.balanceLabel }}
+              </p>
+              <p class="text-sm leading-6 text-base-content/60">
+                Ingresos {{ account.incomeLabel }} · Gastos {{ account.expenseLabel }}
+              </p>
+            </div>
+
+            <progress
+              class="progress progress-secondary"
+              [value]="account.progress"
+              max="100"
+            ></progress>
+
+            @if (account.expensesByCategory.length) {
+              <div class="space-y-3">
+                <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">
+                  Top categoría
+                </p>
+                <div class="rounded-2xl bg-base-200 p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="font-semibold text-base-content">
+                      {{ account.expensesByCategory[0].categoryName }}
+                    </p>
+                    <p class="text-right text-sm font-semibold text-error">
+                      {{ account.expensesByCategory[0].amountLabel }}
                     </p>
                   </div>
-                  <p class="text-right text-sm font-semibold text-error">{{ category.amountLabel }}</p>
                 </div>
-                <progress class="progress progress-error" [value]="category.progress" max="100"></progress>
               </div>
             }
           </div>
         } @else {
           <div class="alert alert-info">
-            <span>No hay categorías de gasto para este periodo.</span>
-          </div>
-        }
-      </app-ui-card>
-
-      <app-ui-card
-        badge="Ingreso"
-        title="Ingreso por categoría"
-        description="Así se distribuyen tus entradas de dinero en el periodo seleccionado."
-      >
-        @if (incomeCategories().length) {
-          <div class="space-y-4">
-            @for (category of incomeCategories(); track category.categoryId ?? category.categoryName) {
-              <div class="space-y-2 rounded-2xl bg-base-200 p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="font-semibold text-base-content">{{ category.categoryName }}</p>
-                    <p class="text-xs uppercase tracking-[0.16em] text-base-content/50">
-                      {{ category.transactionCount }} movimientos
-                    </p>
-                  </div>
-                  <p class="text-right text-sm font-semibold text-success">{{ category.amountLabel }}</p>
-                </div>
-                <progress class="progress progress-success" [value]="category.progress" max="100"></progress>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="alert alert-info">
-            <span>No hay categorías de ingreso para este periodo.</span>
+            <span>Aún no hay una segunda cuenta para mostrar.</span>
           </div>
         }
       </app-ui-card>
     </section>
 
-    <section class="grid gap-6 xl:grid-cols-2">
-      <app-ui-card
-        badge="Alertas"
-        title="Señales a vigilar"
-        description="Los avisos se generan a partir de balance, tendencia y concentración de gasto."
-      >
-        @if (alerts().length) {
-          <div class="space-y-3">
-            @for (alert of alerts(); track alert) {
-              <div role="alert" class="alert alert-warning alert-soft">
-                <span>{{ alert }}</span>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="alert alert-success alert-soft">
-            <span>No hay alertas activas para este periodo.</span>
-          </div>
-        }
-      </app-ui-card>
+    <section class="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm sm:p-6">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-semibold text-base-content">Acciones rápidas</h2>
+          <p class="text-sm text-base-content/60">
+            Botones temporales para completar el flujo visual del dashboard.
+          </p>
+        </div>
+        <app-ui-badge variant="neutral">Temporal</app-ui-badge>
+      </div>
 
-      <app-ui-card
-        badge="Recomendaciones"
-        title="Siguiente mejor acción"
-        description="Pequeñas decisiones hoy pueden mejorar la foto del próximo periodo."
-      >
-        @if (recommendations().length) {
-          <div class="space-y-3">
-            @for (recommendation of recommendations(); track recommendation) {
-              <div role="alert" class="alert alert-info alert-soft">
-                <span>{{ recommendation }}</span>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="alert alert-info alert-soft">
-            <span>Todavía no hay recomendaciones para este periodo.</span>
-          </div>
+      <div class="grid gap-3 sm:grid-cols-3">
+        @for (action of quickActions; track action.label) {
+          <app-ui-button
+            [variant]="action.variant"
+            size="lg"
+            [fullWidth]="true"
+            [loading]="
+              (action.kind === 'create-account' && createAccountBusy()) ||
+              (action.kind === 'create-transaction' && createTransactionBusy())
+            "
+            (onClick)="handleQuickAction(action)"
+          >
+            {{ action.label }}
+          </app-ui-button>
         }
-      </app-ui-card>
+      </div>
+
+      @if (createAccountFeedback() || createTransactionFeedback()) {
+        <div class="mt-4 space-y-2">
+          @if (createAccountFeedback()) {
+            <div class="alert alert-info">
+              <span>{{ createAccountFeedback() }}</span>
+            </div>
+          }
+
+          @if (createTransactionFeedback()) {
+            <div class="alert alert-info">
+              <span>{{ createTransactionFeedback() }}</span>
+            </div>
+          }
+        </div>
+      }
     </section>
+  } @else {
+    <div class="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+      <div class="flex h-full min-h-[24rem] flex-col items-center justify-center gap-3 text-center">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+        <p class="text-sm font-medium text-base-content">Cargando el resumen del dashboard...</p>
+        <p class="max-w-sm text-sm leading-6 text-base-content/60">
+          Estamos llamando a <code>/api/v1/ledgers/summary</code> para construir tu resumen general.
+        </p>
+      </div>
+    </div>
   }
 
   <div class="flex justify-end">
-    <app-ui-button variant="ghost" [loading]="authBusy()" (onClick)="logout()">Cerrar sesión</app-ui-button>
+    <app-ui-button variant="ghost" [loading]="authBusy()" (onClick)="logout()"
+      >Cerrar sesión</app-ui-button
+    >
   </div>
 </div>
