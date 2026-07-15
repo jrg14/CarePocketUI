@@ -6,179 +6,83 @@
   }
 
   @if (summary(); as currentSummary) {
-    <section class="grid gap-6 xl:grid-cols-[0.78fr_1.44fr_0.78fr]">
-      <app-ui-card
-        badge="Balance cuenta 1"
-        [title]="featuredAccounts()[0]?.accountName || 'Cuenta principal'"
-        description="Esta tarjeta toma el balance de la primera cuenta disponible."
-      >
-        @if (featuredAccounts()[0]; as account) {
-          <div class="space-y-4">
-            <div class="space-y-2">
-              <p [ngClass]="['text-3xl', 'font-black', 'tracking-tight', account.valueClass]">
-                {{ account.balanceLabel }}
+    <section class="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm sm:p-6">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-semibold text-base-content">Balance total cuentas</h2>
+          <p class="text-sm text-base-content/60">
+            El donut muestra ingresos y gastos separados por cuenta.
+          </p>
+        </div>
+        <app-ui-badge variant="primary">Donut por cuentas</app-ui-badge>
+      </div>
+
+      @if (accounts().length) {
+        <div class="rounded-[2rem] bg-amber-100/70 p-4 shadow-inner ring-1 ring-amber-200/70">
+          <div class="relative mx-auto max-w-[30rem]">
+            <apx-chart
+              [chart]="balanceChartOptions().chart"
+              [series]="balanceChartOptions().series"
+              [labels]="balanceChartOptions().labels"
+              [colors]="balanceChartOptions().colors"
+              [stroke]="balanceChartOptions().stroke"
+              [dataLabels]="balanceChartOptions().dataLabels"
+              [legend]="balanceChartOptions().legend"
+              [plotOptions]="balanceChartOptions().plotOptions"
+              [tooltip]="balanceChartOptions().tooltip"
+              [responsive]="balanceChartOptions().responsive"
+            ></apx-chart>
+
+            <div
+              class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
+            >
+              <p class="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/45">
+                Balance total cuentas
               </p>
-              <p class="text-sm leading-6 text-base-content/60">
-                Ingresos {{ account.incomeLabel }} · Gastos {{ account.expenseLabel }}
+              <p class="mt-2 text-3xl font-black tracking-tight text-base-content">
+                {{ formatMoney(currentSummary.totals.balance) }}
               </p>
+              <p class="mt-1 text-sm text-base-content/60">Ingresos - gastos</p>
             </div>
-
-            <progress
-              class="progress progress-primary"
-              [value]="account.progress"
-              max="100"
-            ></progress>
-
-            @if (account.expensesByCategory.length) {
-              <div class="space-y-3">
-                <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">
-                  Top categoría
-                </p>
-                <div class="rounded-2xl bg-base-200 p-4">
-                  <div class="flex items-start justify-between gap-3">
-                    <p class="font-semibold text-base-content">
-                      {{ account.expensesByCategory[0].categoryName }}
-                    </p>
-                    <p class="text-right text-sm font-semibold text-error">
-                      {{ account.expensesByCategory[0].amountLabel }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="alert alert-info">
-            <span>Aún no hay una primera cuenta para mostrar.</span>
-          </div>
-        }
-      </app-ui-card>
-
-      <app-ui-card
-        badge="Balance total cuentas"
-        title="Visión general"
-        description="El donut resume ingresos y gastos; el texto central muestra el saldo total."
-        [hoverable]="false"
-      >
-        <div class="space-y-6">
-          <div class="rounded-[2rem] bg-amber-100/70 p-4 shadow-inner ring-1 ring-amber-200/70">
-            <div class="relative mx-auto max-w-[30rem]">
-              <apx-chart
-                [chart]="balanceChartOptions().chart"
-                [series]="balanceChartOptions().series"
-                [labels]="balanceChartOptions().labels"
-                [colors]="balanceChartOptions().colors"
-                [stroke]="balanceChartOptions().stroke"
-                [dataLabels]="balanceChartOptions().dataLabels"
-                [legend]="balanceChartOptions().legend"
-                [plotOptions]="balanceChartOptions().plotOptions"
-                [tooltip]="balanceChartOptions().tooltip"
-                [responsive]="balanceChartOptions().responsive"
-              ></apx-chart>
-
-              <div
-                class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
-              >
-                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/45">
-                  Balance total cuentas
-                </p>
-                <p class="mt-2 text-3xl font-black tracking-tight text-base-content">
-                  {{ formatMoney(currentSummary.totals.balance) }}
-                </p>
-                <p class="mt-1 text-sm text-base-content/60">Ingresos - gastos</p>
-              </div>
-            </div>
-
-            <div class="mt-4 flex flex-wrap justify-center gap-2">
-              <app-ui-badge variant="success"
-                >Ingresos {{ formatMoney(currentSummary.totals.income) }}</app-ui-badge
-              >
-              <app-ui-badge variant="error"
-                >Gastos {{ formatMoney(currentSummary.totals.expense) }}</app-ui-badge
-              >
-            </div>
-          </div>
-
-          <div class="rounded-2xl bg-base-100 p-4 shadow-sm ring-1 ring-base-200/80">
-            <div class="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 class="text-lg font-semibold text-base-content">Gasto por categoría</h2>
-                <p class="text-sm text-base-content/60">
-                  Las barras reflejan el peso relativo de cada categoría.
-                </p>
-              </div>
-              <app-ui-badge variant="info">Top 5</app-ui-badge>
-            </div>
-
-            @if (expenseCategories().length) {
-              <apx-chart
-                [chart]="expenseChartOptions().chart"
-                [series]="expenseChartOptions().series"
-                [colors]="expenseChartOptions().colors"
-                [plotOptions]="expenseChartOptions().plotOptions"
-                [dataLabels]="expenseChartOptions().dataLabels"
-                [xaxis]="expenseChartOptions().xaxis"
-                [yaxis]="expenseChartOptions().yaxis"
-                [grid]="expenseChartOptions().grid"
-                [tooltip]="expenseChartOptions().tooltip"
-                [legend]="expenseChartOptions().legend"
-                [responsive]="expenseChartOptions().responsive"
-              ></apx-chart>
-            } @else {
-              <div class="alert alert-info">
-                <span>No hay categorías de gasto para este resumen.</span>
-              </div>
-            }
           </div>
         </div>
-      </app-ui-card>
 
-      <app-ui-card
-        badge="Balance cuenta 2"
-        [title]="featuredAccounts()[1]?.accountName || 'Cuenta secundaria'"
-        description="Esta tarjeta toma el balance de la segunda cuenta disponible."
-      >
-        @if (featuredAccounts()[1]; as account) {
-          <div class="space-y-4">
-            <div class="space-y-2">
-              <p [ngClass]="['text-3xl', 'font-black', 'tracking-tight', account.valueClass]">
-                {{ account.balanceLabel }}
-              </p>
-              <p class="text-sm leading-6 text-base-content/60">
-                Ingresos {{ account.incomeLabel }} · Gastos {{ account.expenseLabel }}
+        <div class="rounded-2xl bg-base-100 p-4 shadow-sm ring-1 ring-base-200/80">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-base-content">Gasto por categoría</h2>
+              <p class="text-sm text-base-content/60">
+                Cada fila compara la misma categoría entre cuentas.
               </p>
             </div>
-
-            <progress
-              class="progress progress-secondary"
-              [value]="account.progress"
-              max="100"
-            ></progress>
-
-            @if (account.expensesByCategory.length) {
-              <div class="space-y-3">
-                <p class="text-xs uppercase tracking-[0.18em] text-base-content/50">
-                  Top categoría
-                </p>
-                <div class="rounded-2xl bg-base-200 p-4">
-                  <div class="flex items-start justify-between gap-3">
-                    <p class="font-semibold text-base-content">
-                      {{ account.expensesByCategory[0].categoryName }}
-                    </p>
-                    <p class="text-right text-sm font-semibold text-error">
-                      {{ account.expensesByCategory[0].amountLabel }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            }
+            <app-ui-badge variant="info">Stacked horizontal</app-ui-badge>
           </div>
-        } @else {
-          <div class="alert alert-info">
-            <span>Aún no hay una segunda cuenta para mostrar.</span>
-          </div>
-        }
-      </app-ui-card>
+
+          @if (categoryExpenseChartOptions().series.length) {
+            <apx-chart
+              [chart]="categoryExpenseChartOptions().chart"
+              [series]="categoryExpenseChartOptions().series"
+              [colors]="categoryExpenseChartOptions().colors"
+              [plotOptions]="categoryExpenseChartOptions().plotOptions"
+              [dataLabels]="categoryExpenseChartOptions().dataLabels"
+              [xaxis]="categoryExpenseChartOptions().xaxis"
+              [yaxis]="categoryExpenseChartOptions().yaxis"
+              [grid]="categoryExpenseChartOptions().grid"
+              [tooltip]="categoryExpenseChartOptions().tooltip"
+              [legend]="categoryExpenseChartOptions().legend"
+              [responsive]="categoryExpenseChartOptions().responsive"
+            ></apx-chart>
+          } @else {
+            <div class="alert alert-info">
+              <span>No hay categorías de gasto para este resumen.</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="alert alert-info">
+          <span>Aún no hay cuentas para mostrar en el dashboard.</span>
+        </div>
+      }
     </section>
 
     <section class="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm sm:p-6">

@@ -5,7 +5,6 @@ import { NgApexchartsModule, type ApexOptions } from 'ng-apexcharts';
 
 import { UiBadgeComponent } from '../../../../components/ui-badge/ui-badge';
 import { UiButtonComponent } from '../../../../components/ui-button/ui-button';
-import { UiCardComponent } from '../../../../components/ui-card/ui-card';
 import { AuthService } from '../../data-services/users-auth.service';
 import { LedgerSummaryService } from '../../data-services/ledger-summary.service';
 
@@ -50,7 +49,7 @@ type BalanceChartOptions = {
   responsive: NonNullable<ApexOptions['responsive']>;
 };
 
-type ExpenseChartOptions = {
+type CategoryExpenseChartOptions = {
   chart: NonNullable<ApexOptions['chart']>;
   series: NonNullable<ApexOptions['series']>;
   colors: NonNullable<ApexOptions['colors']>;
@@ -67,7 +66,7 @@ type ExpenseChartOptions = {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule, UiBadgeComponent, UiButtonComponent, UiCardComponent],
+  imports: [CommonModule, NgApexchartsModule, UiBadgeComponent, UiButtonComponent],
   templateUrl: './dashboard-page.html',
 })
 export class DashboardPageComponent {
@@ -120,8 +119,6 @@ export class DashboardPageComponent {
     ];
   });
 
-  readonly expenseCategories = computed(() => this.mapCategories(this.summary()?.totals.expensesByCategory ?? []));
-
   readonly accounts = computed<DashboardAccountViewModel[]>(() => {
     const accounts = this.summary()?.accounts ?? [];
     const maxBalance = Math.max(...accounts.map((account) => Math.abs(account.balance)), 0);
@@ -137,12 +134,14 @@ export class DashboardPageComponent {
     }));
   });
 
-  readonly featuredAccounts = computed(() => this.accounts().slice(0, 2));
-
   readonly balanceChartOptions = computed<BalanceChartOptions>(() => {
-    const summary = this.summary();
-    const income = summary?.totals.income ?? 0;
-    const expense = summary?.totals.expense ?? 0;
+    const accounts = this.accounts();
+    const firstAccount = accounts[0];
+    const secondAccount = accounts[1];
+    const firstIncome = firstAccount?.income ?? 0;
+    const firstExpense = firstAccount?.expense ?? 0;
+    const secondIncome = secondAccount?.income ?? 0;
+    const secondExpense = secondAccount?.expense ?? 0;
 
     return {
       chart: {
@@ -151,9 +150,14 @@ export class DashboardPageComponent {
         toolbar: { show: false },
         sparkline: { enabled: true },
       },
-      series: [Math.max(income, 0), Math.max(expense, 0)],
-      labels: ['Ingresos', 'Gastos'],
-      colors: ['#22c55e', '#ef4444'],
+      series: [
+        Math.max(firstIncome, 0),
+        Math.max(firstExpense, 0),
+        Math.max(secondIncome, 0),
+        Math.max(secondExpense, 0),
+      ],
+      labels: ['Cuenta 1 ingresos', 'Cuenta 1 gastos', 'Cuenta 2 ingresos', 'Cuenta 2 gastos'],
+      colors: ['#16a34a', '#ef4444', '#0f766e', '#f97316'],
       stroke: {
         width: 4,
         colors: ['transparent'],
@@ -189,28 +193,32 @@ export class DashboardPageComponent {
     };
   });
 
-  readonly expenseChartOptions = computed<ExpenseChartOptions>(() => {
-    const categories = this.expenseCategories();
+  readonly categoryExpenseChartOptions = computed<CategoryExpenseChartOptions>(() => {
+    const accounts = this.accounts();
+    const categories = this.getCategoryNames(accounts);
+    const series = accounts.map((account, index) => ({
+      name: account.accountName,
+      data: categories.map((categoryName) => {
+        const category = account.expensesByCategory.find((entry) => entry.categoryName === categoryName);
+
+        return Number((category?.amount ?? 0).toFixed(2));
+      }),
+    }));
 
     return {
       chart: {
         type: 'bar',
-        height: 240,
+        height: 280,
+        stacked: true,
         toolbar: { show: false },
         sparkline: { enabled: false },
       },
-      series: [
-        {
-          name: 'Gasto',
-          data: categories.map((category) => Number(category.amount.toFixed(2))),
-        },
-      ],
-      colors: ['#ef4444'],
+      series,
+      colors: ['#2563eb', '#f97316', '#8b5cf6', '#10b981'],
       plotOptions: {
         bar: {
           horizontal: true,
-          barHeight: '62%',
-          distributed: true,
+          barHeight: '66%',
           borderRadius: 6,
         },
       },
@@ -218,7 +226,7 @@ export class DashboardPageComponent {
         enabled: false,
       },
       xaxis: {
-        categories: categories.map((category) => category.categoryName),
+        categories,
         labels: {
           formatter: (value: string) => this.formatMoney(Number(value)),
         },
@@ -241,14 +249,14 @@ export class DashboardPageComponent {
         },
       },
       legend: {
-        show: false,
+        position: 'bottom',
       },
       responsive: [
         {
           breakpoint: 640,
           options: {
             chart: {
-              height: 220,
+              height: 260,
             },
           },
         },
@@ -287,6 +295,12 @@ export class DashboardPageComponent {
 
   formatMoney(value: number): string {
     return `${value < 0 ? '-' : ''}€${this.amountFormatter.format(Math.abs(value))}`;
+  }
+
+  private getCategoryNames(accounts: DashboardAccountViewModel[]): string[] {
+    return Array.from(
+      new Set(accounts.flatMap((account) => account.expensesByCategory.map((category) => category.categoryName))),
+    );
   }
 
   private loadSummary(): void {
@@ -344,10 +358,11 @@ export class DashboardPageComponent {
       return;
     }
 
-    const account = this.featuredAccounts()[0];
+    const accounts = this.accounts();
+    const account = this.selectAccountForTransaction(accounts);
 
     if (!account) {
-      this.createTransactionFeedback.set('No hay una cuenta disponible para crear la transacción.');
+      this.createTransactionFeedback.set('No hay una cuenta válida para crear la transacción.');
       return;
     }
 
@@ -421,6 +436,40 @@ export class DashboardPageComponent {
           this.createTransactionBusy.set(false);
         },
       });
+  }
+
+  private selectAccountForTransaction(accounts: DashboardAccountViewModel[]): DashboardAccountViewModel | null {
+    if (!accounts.length) {
+      return null;
+    }
+
+    if (accounts.length === 1) {
+      return accounts[0];
+    }
+
+    const selection = window.prompt(
+      [
+        'Elige la cuenta para la transacción:',
+        ...accounts.map(
+          (account, index) => `${index + 1}. ${account.accountName} (${this.formatMoney(account.balance)})`,
+        ),
+        'Escribe el número de la cuenta.',
+      ].join('\n'),
+      '1',
+    );
+
+    if (selection === null) {
+      return null;
+    }
+
+    const selectedIndex = Number.parseInt(selection.trim(), 10) - 1;
+
+    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= accounts.length) {
+      this.createTransactionFeedback.set('Selecciona un número de cuenta válido.');
+      return null;
+    }
+
+    return accounts[selectedIndex] ?? null;
   }
 
   private mapCategories(
