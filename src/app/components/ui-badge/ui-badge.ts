@@ -6,7 +6,7 @@ import { Component, Input } from '@angular/core';
   templateUrl: './ui-badge.html',
 })
 export class UiBadgeComponent {
-  @Input() variant: 'neutral' | 'primary' | 'secondary' | 'accent' | 'ghost' | 'success' | 'warning' | 'error' = 'neutral';
+  @Input() variant: 'neutral' | 'primary' | 'secondary' | 'accent' | 'ghost' | 'info' | 'success' | 'warning' | 'error' = 'neutral';
   @Input() size: 'xs' | 'sm' | 'md' | 'lg' = 'md';
   @Input() outline = false;
 
