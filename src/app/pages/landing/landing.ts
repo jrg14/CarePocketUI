@@ -51,9 +51,9 @@ export class LandingComponent {
 
   readonly questionCards = [
     {
-      title: '¿Por qué estoy gastando más?',
+      title: '¿En que estoy gastando más?',
       description:
-        'CarePocket cruza series temporales, categorías y cambios de comportamiento para explicar el aumento del gasto.',
+        'CarePocket ataca la raíz del problema: conecta tus gastos, hábitos y cambios de rutina para decirte exactamente por qué estás gastando más.',
     },
     {
       title: '¿Qué hábitos me frenan?',

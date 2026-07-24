@@ -16,17 +16,9 @@ export class AppComponent {
   private readonly router = inject(Router);
 
   private readonly publicNavLinks = [
-    { label: 'Problema', href: '#problema' },
-    { label: 'Análisis', href: '#analisis' },
-    { label: 'Simulación', href: '#simulacion' },
   ];
 
   private readonly authenticatedNavLinks = [
-    { label: 'Resumen', href: '/dashboard', fragment: 'resumen' },
-    { label: 'Movimientos', href: '/dashboard', fragment: 'movimientos' },
-    { label: 'Presupuestos', href: '/dashboard', fragment: 'presupuestos' },
-    { label: 'Objetivos', href: '/dashboard', fragment: 'objetivos' },
-    { label: 'Ajustes', href: '/dashboard', fragment: 'ajustes' },
   ];
 
   readonly navLinks = computed(() =>
@@ -34,9 +26,6 @@ export class AppComponent {
   );
 
   readonly footerLinks = [
-    { label: 'Problema', href: '#problema' },
-    { label: 'Análisis', href: '#analisis' },
-    { label: 'Simulación', href: '#simulacion' },
   ];
 
   readonly socialLinks = [

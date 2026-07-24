@@ -1,14 +1,14 @@
-<div class="space-y-16 pb-10">
+<div class="space-y-40 pb-10">
   <app-ui-hero
     eyebrow="CarePocket"
-    title="Tu analista financiero personal, no solo una app de presupuesto"
-    description="CarePocket transforma movimientos, hábitos y tendencias en contexto útil: explica por qué cambian tus finanzas, predice escenarios futuros y sugiere acciones concretas para mejorar tu situación económica."
+    title="Tu analista financiero personal"
+    description="CarePocket le da sentido a tu dinero. Te explica sin rodeos por qué cambian tus finanzas, te muestra qué pasará con tus gastos en el futuro y te dice exactamente qué hacer hoy para mejorar tu economía."
     primaryBtnText="Explorar el análisis"
     secondaryBtnText="Probar simulación"
     [highlights]="[
       'Detecta patrones invisibles',
       'Anticipa escenarios financieros',
-      'Recomienda decisiones accionables'
+      'Recomienda decisiones sobre tus finanzas',
     ]"
     (onPrimaryAction)="scrollTo('analisis')"
     (onSecondaryAction)="scrollTo('simulacion')"
@@ -17,13 +17,12 @@
   <app-ui-section
     id="problema"
     eyebrow="La pregunta correcta"
-    title="No basta con saber cuánto gastaste"
-    description="La mayoría de apps muestran el pasado. CarePocket está pensada para explicar el comportamiento financiero y convertir datos dispersos en decisiones claras."
+    title="El problema real es que no basta con saber cuánto gastaste"
+    description="Otras apps solo te muestran el pasado. CarePocket analiza tus números para darte respuestas claras y ayudarte a tomar mejores decisiones hoy."
   >
     <div class="grid gap-6 md:grid-cols-3">
       @for (card of questionCards; track card.title) {
         <app-ui-card [title]="card.title" [description]="card.description" [hoverable]="false">
-          <app-ui-badge variant="neutral" size="sm">Insight</app-ui-badge>
         </app-ui-card>
       }
     </div>
@@ -38,122 +37,8 @@
     <div class="grid gap-6 md:grid-cols-3">
       @for (card of insightCards; track card.title) {
         <app-ui-card [badge]="card.badge" [title]="card.title" [description]="card.description">
-          <div class="mt-4 flex flex-wrap gap-2">
-            <app-ui-badge size="sm">Datos reales</app-ui-badge>
-            <app-ui-badge size="sm">Contexto</app-ui-badge>
-          </div>
         </app-ui-card>
       }
-    </div>
-
-    <div class="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-      <app-ui-card title="Qué preguntas responde" description="La experiencia está orientada a preguntas más valiosas que un simple balance.">
-        <div class="grid gap-3">
-          <div class="rounded-2xl bg-base-200 p-4 text-sm text-base-content/70">
-            ¿Por qué estoy gastando más este mes?
-          </div>
-          <div class="rounded-2xl bg-base-200 p-4 text-sm text-base-content/70">
-            ¿Qué categorías están afectando mi ahorro?
-          </div>
-          <div class="rounded-2xl bg-base-200 p-4 text-sm text-base-content/70">
-            ¿Qué ocurrirá con mis finanzas dentro de unos meses?
-          </div>
-        </div>
-      </app-ui-card>
-
-      <app-ui-card title="Señales de alerta" description="La plataforma prioriza riesgos y patrones que merecen atención.">
-        <div class="space-y-3">
-          @for (signal of riskSignals; track signal) {
-            <div class="flex items-start gap-3 rounded-2xl bg-base-200 p-4 text-sm text-base-content/70">
-              <span class="badge badge-warning badge-sm mt-0.5">Alerta</span>
-              <span>{{ signal }}</span>
-            </div>
-          }
-        </div>
-      </app-ui-card>
-    </div>
-  </app-ui-section>
-
-  <app-ui-section
-    id="simulacion"
-    eyebrow="Simulación"
-    title="Visualiza el impacto de cambiar hábitos"
-    description="Introduce un panorama financiero básico y mira cómo CarePocket puede ayudar a convertirlo en escenarios y recomendaciones."
-  >
-    <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-      <app-ui-card title="Escenario mensual" description="Ejemplo de entrada para proyectar capacidad de ahorro.">
-        <div class="grid gap-4">
-          <app-ui-input
-            label="Ingreso mensual"
-            type="number"
-            placeholder="2400"
-            autocomplete="off"
-            [(value)]="monthlyIncome"
-          />
-
-          <app-ui-input
-            label="Gastos fijos"
-            type="number"
-            placeholder="1380"
-            autocomplete="off"
-            [(value)]="fixedExpenses"
-          />
-
-          <app-ui-input
-            label="Gastos variables"
-            type="number"
-            placeholder="520"
-            autocomplete="off"
-            [(value)]="variableExpenses"
-          />
-
-          <app-ui-textarea
-            label="Objetivo financiero"
-            placeholder="Por ejemplo: ahorrar más, reducir deuda o preparar un colchón"
-            [rows]="4"
-          />
-
-          <div class="flex flex-wrap gap-3">
-            <app-ui-button>Analizar escenario</app-ui-button>
-            <app-ui-button variant="ghost">Comparar otro hábito</app-ui-button>
-          </div>
-        </div>
-      </app-ui-card>
-
-      <app-ui-card title="Lectura inicial" description="Cómo se vería la salida de CarePocket con esos datos.">
-        <div class="grid gap-4">
-          <div class="stats stats-vertical bg-base-200 shadow-sm">
-            <div class="stat">
-              <div class="stat-title">Capacidad de ahorro estimada</div>
-              <div class="stat-value text-primary">~500 €</div>
-              <div class="stat-desc">Ingreso menos gasto fijo y variable</div>
-            </div>
-            <div class="stat">
-              <div class="stat-title">Presión sobre el presupuesto</div>
-              <div class="stat-value text-secondary">Media</div>
-              <div class="stat-desc">Pequeños cambios mejorarían el margen</div>
-            </div>
-          </div>
-
-          <div class="rounded-2xl bg-base-200 p-4 text-sm leading-6 text-base-content/70">
-            Si reduces gasto variable un 10%, la capacidad de ahorro mejora de forma inmediata y la liquidez gana estabilidad.
-          </div>
-        </div>
-      </app-ui-card>
-    </div>
-  </app-ui-section>
-
-  <app-ui-section
-    id="accion"
-    eyebrow="Resultado esperado"
-    title="Una experiencia financiera que te ayuda a decidir mejor"
-    description="CarePocket no se queda en mostrar números: busca ayudarte a entender el impacto de tus hábitos y a tomar mejores decisiones cada mes."
-    [centered]="true"
-  >
-    <div class="flex flex-wrap justify-center gap-3">
-      <app-ui-badge>Comprensión</app-ui-badge>
-      <app-ui-badge>Predicción</app-ui-badge>
-      <app-ui-badge>Recomendación</app-ui-badge>
     </div>
   </app-ui-section>
 </div>
