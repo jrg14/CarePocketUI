@@ -104,7 +104,8 @@
             [fullWidth]="true"
             [loading]="
               (action.kind === 'create-account' && createAccountBusy()) ||
-              (action.kind === 'create-transaction' && createTransactionBusy())
+              (action.kind === 'create-transaction' && createTransactionBusy()) ||
+              (action.kind === 'create-transfer' && createTransferBusy())
             "
             (onClick)="handleQuickAction(action)"
           >
@@ -113,7 +114,7 @@
         }
       </div>
 
-      @if (createAccountFeedback() || createTransactionFeedback()) {
+      @if (createAccountFeedback() || createTransactionFeedback() || createTransferFeedback()) {
         <div class="mt-4 space-y-2">
           @if (createAccountFeedback()) {
             <div class="alert alert-info">
@@ -124,6 +125,12 @@
           @if (createTransactionFeedback()) {
             <div class="alert alert-info">
               <span>{{ createTransactionFeedback() }}</span>
+            </div>
+          }
+
+          @if (createTransferFeedback()) {
+            <div class="alert alert-info">
+              <span>{{ createTransferFeedback() }}</span>
             </div>
           }
         </div>
@@ -259,6 +266,134 @@
           <app-ui-button variant="ghost" type="button" (onClick)="closeModal()">Cancelar</app-ui-button>
           <app-ui-button type="submit" [loading]="createTransactionBusy()">
             Crear transacción
+          </app-ui-button>
+        </div>
+      </form>
+    </app-ui-modal>
+
+    <app-ui-modal
+      [open]="activeModal() === 'create-transfer'"
+      title="Crear transferencia interna"
+      description="Mueve saldo entre dos cuentas sin registrar ingreso ni gasto."
+      size="lg"
+      (closed)="closeModal()"
+    >
+      <form class="space-y-4" [formGroup]="transferForm" (ngSubmit)="submitCreateTransfer()">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Cuenta origen</span>
+            </div>
+            <select
+              class="select w-full"
+              [class.select-error]="!!transferControlError('fromAccountId')"
+              formControlName="fromAccountId"
+            >
+              @for (account of accounts(); track account.accountId) {
+                <option [ngValue]="account.accountId">
+                  {{ account.accountName }} · {{ account.balanceLabel }}
+                </option>
+              }
+            </select>
+            @if (transferControlError('fromAccountId')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  transferControlError('fromAccountId')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Cuenta destino</span>
+            </div>
+            <select
+              class="select w-full"
+              [class.select-error]="!!transferControlError('toAccountId')"
+              formControlName="toAccountId"
+            >
+              @for (account of accounts(); track account.accountId) {
+                <option [ngValue]="account.accountId">
+                  {{ account.accountName }} · {{ account.balanceLabel }}
+                </option>
+              }
+            </select>
+            @if (transferControlError('toAccountId')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  transferControlError('toAccountId')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          <app-ui-input
+            label="Importe"
+            type="number"
+            [min]="0.01"
+            step="0.01"
+            formControlName="amount"
+            placeholder="500.00"
+            [errorText]="transferControlError('amount') ?? ''"
+          />
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Moneda</span>
+            </div>
+            <select
+              class="select w-full"
+              [class.select-error]="!!transferControlError('currency')"
+              formControlName="currency"
+            >
+              @for (currency of transferCurrencies; track currency) {
+                <option [ngValue]="currency">{{ currency }}</option>
+              }
+            </select>
+            @if (transferControlError('currency')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  transferControlError('currency')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          <app-ui-input
+            label="Fecha"
+            type="date"
+            formControlName="transferDate"
+            [errorText]="transferControlError('transferDate') ?? ''"
+          />
+        </div>
+
+        <label class="form-control w-full">
+          <div class="label">
+            <span class="label-text">Descripción</span>
+            <span class="label-text-alt">{{ transferForm.controls.description.value.length }}/180</span>
+          </div>
+          <textarea
+            class="textarea w-full"
+            [class.textarea-error]="!!transferControlError('description')"
+            formControlName="description"
+            rows="3"
+            maxlength="180"
+            placeholder="Ahorro mensual"
+          ></textarea>
+          @if (transferControlError('description')) {
+            <div class="label">
+              <span class="label-text-alt text-error">{{
+                transferControlError('description')
+              }}</span>
+            </div>
+          }
+        </label>
+
+        <div class="modal-action">
+          <app-ui-button variant="ghost" type="button" (onClick)="closeModal()">Cancelar</app-ui-button>
+          <app-ui-button type="submit" [loading]="createTransferBusy()">
+            Crear transferencia
           </app-ui-button>
         </div>
       </form>

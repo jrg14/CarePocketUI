@@ -5,4 +5,5 @@ export const usersApiEndpoints = {
   me: '/api/v1/users/me',
   ledgerSummary: '/api/v1/ledgers/summary',
   ledgerAccounts: '/api/v1/ledgers/accounts',
+  ledgerTransfers: '/api/v1/ledgers/transfers',
 } as const;

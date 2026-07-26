@@ -53,3 +53,17 @@ export interface LedgerSummaryViewModel {
   totals: LedgerSummaryTotalsViewModel;
   accounts: LedgerSummaryAccountViewModel[];
 }
+
+export interface LedgerTransferCreatePayload {
+  from_account_id: number;
+  to_account_id: number;
+  amount: number;
+  currency: string;
+  transfer_date: string;
+  description: string;
+}
+
+export interface LedgerTransferSchema extends Omit<LedgerTransferCreatePayload, 'amount'> {
+  transfer_id: number;
+  amount: LedgerDecimalValue;
+}

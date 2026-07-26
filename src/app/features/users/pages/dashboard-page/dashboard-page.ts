@@ -1,6 +1,13 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgApexchartsModule, type ApexOptions } from 'ng-apexcharts';
 
@@ -36,11 +43,55 @@ type DashboardAccountViewModel = {
 type DashboardQuickAction = {
   label: string;
   variant: 'primary' | 'secondary' | 'accent';
-  kind: 'create-account' | 'create-transaction';
+  kind: 'create-account' | 'create-transaction' | 'create-transfer';
 };
 
 type DashboardModalKind = DashboardQuickAction['kind'];
 type TransactionType = 'income' | 'expense';
+type TransferControlName =
+  | 'fromAccountId'
+  | 'toAccountId'
+  | 'amount'
+  | 'currency'
+  | 'transferDate'
+  | 'description';
+
+const VALID_TRANSFER_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'] as const;
+
+function validTransferCurrency(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '').trim().toUpperCase();
+
+  if (!value) {
+    return null;
+  }
+
+  return VALID_TRANSFER_CURRENCIES.includes(value as (typeof VALID_TRANSFER_CURRENCIES)[number])
+    ? null
+    : { invalidCurrency: true };
+}
+
+function validDateInput(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '').trim();
+
+  if (!value) {
+    return null;
+  }
+
+  const parsedDate = new Date(`${value}T00:00:00`);
+
+  return Number.isNaN(parsedDate.getTime()) ? { invalidDate: true } : null;
+}
+
+function differentTransferAccounts(control: AbstractControl): ValidationErrors | null {
+  const fromAccountId = Number(control.get('fromAccountId')?.value ?? 0);
+  const toAccountId = Number(control.get('toAccountId')?.value ?? 0);
+
+  if (fromAccountId > 0 && toAccountId > 0 && fromAccountId === toAccountId) {
+    return { sameAccount: true };
+  }
+
+  return null;
+}
 
 type BalanceChartOptions = {
   chart: NonNullable<ApexOptions['chart']>;
@@ -101,12 +152,16 @@ export class DashboardPageComponent {
   readonly error = this.ledgerSummaryService.error;
   readonly createAccountBusy = signal(false);
   readonly createTransactionBusy = signal(false);
+  readonly createTransferBusy = signal(false);
   readonly createAccountFeedback = signal<string | null>(null);
   readonly createTransactionFeedback = signal<string | null>(null);
+  readonly createTransferFeedback = signal<string | null>(null);
   readonly activeModal = signal<DashboardModalKind | null>(null);
+  readonly transferCurrencies = VALID_TRANSFER_CURRENCIES;
   readonly quickActions: DashboardQuickAction[] = [
     { label: 'Crear cuenta', variant: 'primary', kind: 'create-account' },
     { label: 'Crear transacción', variant: 'secondary', kind: 'create-transaction' },
+    { label: 'Crear transferencia', variant: 'accent', kind: 'create-transfer' },
   ];
 
   readonly accountForm = this.formBuilder.group({
@@ -122,6 +177,18 @@ export class DashboardPageComponent {
     description: ['', [Validators.required]],
     transactionCategoryId: [0, [Validators.required, Validators.min(0)]],
   });
+
+  readonly transferForm = this.formBuilder.group(
+    {
+      fromAccountId: [0, [Validators.required, Validators.min(1)]],
+      toAccountId: [0, [Validators.required, Validators.min(1)]],
+      amount: [1, [Validators.required, Validators.min(0.01)]],
+      currency: ['EUR', [Validators.required, validTransferCurrency]],
+      transferDate: [this.todayInputValue(), [Validators.required, validDateInput]],
+      description: ['', [Validators.required, Validators.maxLength(180)]],
+    },
+    { validators: differentTransferAccounts },
+  );
 
   readonly welcomeTitle = computed(() => {
     const user = this.user();
@@ -312,11 +379,16 @@ export class DashboardPageComponent {
 
     if (action.kind === 'create-transaction') {
       this.openCreateTransactionModal();
+      return;
+    }
+
+    if (action.kind === 'create-transfer') {
+      this.openCreateTransferModal();
     }
   }
 
   closeModal(): void {
-    if (this.createAccountBusy() || this.createTransactionBusy()) {
+    if (this.createAccountBusy() || this.createTransactionBusy() || this.createTransferBusy()) {
       return;
     }
 
@@ -431,6 +503,80 @@ export class DashboardPageComponent {
       });
   }
 
+  submitCreateTransfer(): void {
+    if (this.createTransferBusy()) {
+      return;
+    }
+
+    if (this.transferForm.invalid) {
+      this.transferForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.transferForm.getRawValue();
+    const fromAccount = this.accounts().find((entry) => entry.accountId === formValue.fromAccountId);
+    const toAccount = this.accounts().find((entry) => entry.accountId === formValue.toAccountId);
+
+    if (!fromAccount) {
+      this.transferForm.controls.fromAccountId.setErrors({ min: true });
+      this.transferForm.markAllAsTouched();
+      this.createTransferFeedback.set('Selecciona una cuenta origen válida.');
+      return;
+    }
+
+    if (!toAccount) {
+      this.transferForm.controls.toAccountId.setErrors({ min: true });
+      this.transferForm.markAllAsTouched();
+      this.createTransferFeedback.set('Selecciona una cuenta destino válida.');
+      return;
+    }
+
+    const normalizedCurrency = formValue.currency.trim().toUpperCase();
+    const description = formValue.description.trim();
+
+    if (!VALID_TRANSFER_CURRENCIES.includes(normalizedCurrency as (typeof VALID_TRANSFER_CURRENCIES)[number])) {
+      this.transferForm.controls.currency.setErrors({ invalidCurrency: true });
+      this.transferForm.markAllAsTouched();
+      return;
+    }
+
+    if (!description) {
+      this.transferForm.controls.description.setErrors({ required: true });
+      this.transferForm.markAllAsTouched();
+      return;
+    }
+
+    this.createTransferBusy.set(true);
+    this.createTransferFeedback.set(null);
+
+    this.ledgerSummaryService
+      .createTransfer({
+        from_account_id: fromAccount.accountId,
+        to_account_id: toAccount.accountId,
+        amount: formValue.amount,
+        currency: normalizedCurrency,
+        transfer_date: this.toIsoDate(formValue.transferDate),
+        description,
+      })
+      .subscribe({
+        next: () => {
+          this.createTransferFeedback.set(
+            `Transferencia creada de "${fromAccount.accountName}" a "${toAccount.accountName}".`,
+          );
+          this.resetTransferForm();
+          this.activeModal.set(null);
+          this.refreshLedgersAfterTransfer();
+        },
+        error: (error: unknown) => {
+          this.createTransferFeedback.set(this.getTransferErrorMessage(error));
+          this.createTransferBusy.set(false);
+        },
+        complete: () => {
+          this.createTransferBusy.set(false);
+        },
+      });
+  }
+
   logout(): void {
     this.authService.logout().subscribe({
       complete: () => {
@@ -503,6 +649,50 @@ export class DashboardPageComponent {
     return null;
   }
 
+  transferControlError(controlName: TransferControlName): string | null {
+    const control = this.transferForm.controls[controlName];
+
+    if (!control.touched && !control.dirty) {
+      return null;
+    }
+
+    if (control.hasError('required')) {
+      return 'Este campo es obligatorio.';
+    }
+
+    if (
+      (controlName === 'fromAccountId' || controlName === 'toAccountId') &&
+      control.hasError('min')
+    ) {
+      return 'Selecciona una cuenta válida.';
+    }
+
+    if (
+      (controlName === 'fromAccountId' || controlName === 'toAccountId') &&
+      this.transferForm.hasError('sameAccount')
+    ) {
+      return 'Origen y destino no pueden ser la misma cuenta.';
+    }
+
+    if (controlName === 'amount' && control.hasError('min')) {
+      return 'Introduce un importe mayor que cero.';
+    }
+
+    if (controlName === 'currency' && control.hasError('invalidCurrency')) {
+      return 'Selecciona una moneda válida.';
+    }
+
+    if (controlName === 'transferDate' && control.hasError('invalidDate')) {
+      return 'Selecciona una fecha válida.';
+    }
+
+    if (controlName === 'description' && control.hasError('maxlength')) {
+      return 'La descripción no puede superar 180 caracteres.';
+    }
+
+    return null;
+  }
+
   private getCategoryNames(accounts: DashboardAccountViewModel[]): string[] {
     return Array.from(
       new Set(accounts.flatMap((account) => account.expensesByCategory.map((category) => category.categoryName))),
@@ -512,6 +702,16 @@ export class DashboardPageComponent {
   private loadSummary(): void {
     this.ledgerSummaryService.loadSummary().subscribe({
       error: () => void 0,
+    });
+  }
+
+  private refreshLedgersAfterTransfer(): void {
+    this.ledgerSummaryService.refreshLedgerData().subscribe({
+      error: () => {
+        this.createTransferFeedback.set(
+          'Transferencia creada, pero no se han podido refrescar los balances.',
+        );
+      },
     });
   }
 
@@ -534,6 +734,19 @@ export class DashboardPageComponent {
     this.activeModal.set('create-transaction');
   }
 
+  private openCreateTransferModal(): void {
+    const accounts = this.accounts();
+
+    if (accounts.length < 2) {
+      this.createTransferFeedback.set('Necesitas al menos dos cuentas para crear una transferencia.');
+      return;
+    }
+
+    this.createTransferFeedback.set(null);
+    this.resetTransferForm(accounts[0]?.accountId ?? 0, accounts[1]?.accountId ?? 0);
+    this.activeModal.set('create-transfer');
+  }
+
   private resetTransactionForm(accountId = this.accounts()[0]?.accountId ?? 0): void {
     this.transactionForm.reset({
       accountId,
@@ -546,6 +759,20 @@ export class DashboardPageComponent {
     });
   }
 
+  private resetTransferForm(
+    fromAccountId = this.accounts()[0]?.accountId ?? 0,
+    toAccountId = this.accounts()[1]?.accountId ?? 0,
+  ): void {
+    this.transferForm.reset({
+      fromAccountId,
+      toAccountId,
+      amount: 1,
+      currency: 'EUR',
+      transferDate: this.todayInputValue(),
+      description: '',
+    });
+  }
+
   private todayInputValue(): string {
     return new Date().toISOString().slice(0, 10);
   }
@@ -554,6 +781,28 @@ export class DashboardPageComponent {
     const parsedDate = new Date(`${dateValue}T00:00:00`);
 
     return Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
+  }
+
+  private getTransferErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 400) {
+        return 'Origen y destino no pueden ser la misma cuenta.';
+      }
+
+      if (error.status === 401) {
+        return 'Tu sesión ha caducado. Vuelve a iniciar sesión para crear la transferencia.';
+      }
+
+      if (error.status === 404) {
+        return 'Alguna de las cuentas no existe o no pertenece a tu usuario.';
+      }
+
+      if (error.status === 422) {
+        return 'Revisa los datos de la transferencia antes de enviarla.';
+      }
+    }
+
+    return 'No se ha podido crear la transferencia.';
   }
 
   private mapCategories(

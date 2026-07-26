@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, finalize, map, tap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, forkJoin, map, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
@@ -14,6 +14,8 @@ import {
   LedgerSummaryTotalsSchema,
   LedgerSummaryTotalsViewModel,
   LedgerSummaryViewModel,
+  LedgerTransferCreatePayload,
+  LedgerTransferSchema,
 } from '../models/ledger-summary.models';
 
 @Injectable({
@@ -57,6 +59,24 @@ export class LedgerSummaryService {
 
     return this.http.post<void>(this.apiUrl(usersApiEndpoints.ledgerAccounts), {
       account_name: normalizedName,
+    });
+  }
+
+  createTransfer(payload: LedgerTransferCreatePayload): Observable<LedgerTransferSchema> {
+    return this.http.post<LedgerTransferSchema>(this.apiUrl(usersApiEndpoints.ledgerTransfers), payload);
+  }
+
+  loadAccounts(): Observable<unknown> {
+    return this.http.get<unknown>(this.apiUrl(usersApiEndpoints.ledgerAccounts));
+  }
+
+  refreshLedgerData(periodDays = 30): Observable<{
+    accounts: unknown;
+    summary: LedgerSummaryViewModel;
+  }> {
+    return forkJoin({
+      accounts: this.loadAccounts(),
+      summary: this.loadSummary(periodDays),
     });
   }
 
