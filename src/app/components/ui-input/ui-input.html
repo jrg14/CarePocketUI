@@ -11,17 +11,22 @@
   }
 
   <input
-    class="input input-bordered"
-    [class.input-error]="!!errorText"
+    [class]="inputClasses"
     [id]="inputId"
     [name]="name"
     [type]="type"
     [value]="value"
     [placeholder]="placeholder"
     [autocomplete]="autocomplete"
+    [attr.inputmode]="inputMode || null"
+    [attr.min]="min"
+    [attr.max]="max"
+    [attr.step]="step"
+    [attr.maxlength]="maxLength"
     [required]="required"
     [disabled]="disabled"
     (input)="handleInput($event)"
+    (blur)="handleBlur()"
   />
 
   @if (helperText || errorText) {

@@ -1,25 +1,18 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, inject } from '@angular/core';
 
-import { UiBadgeComponent } from '../../components/ui-badge/ui-badge';
-import { UiButtonComponent } from '../../components/ui-button/ui-button';
+
 import { UiCardComponent } from '../../components/ui-card/ui-card';
 import { UiHeroComponent } from '../../components/ui-hero/ui-hero';
-import { UiInputComponent } from '../../components/ui-input/ui-input';
 import { UiSectionComponent } from '../../components/ui-section/ui-section';
-import { UiTextareaComponent } from '../../components/ui-textarea/ui-textarea';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
   imports: [
-    UiBadgeComponent,
-    UiButtonComponent,
     UiCardComponent,
     UiHeroComponent,
-    UiInputComponent,
     UiSectionComponent,
-    UiTextareaComponent,
   ],
   templateUrl: './landing.html',
 })

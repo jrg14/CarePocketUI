@@ -129,6 +129,140 @@
         </div>
       }
     </section>
+
+    <app-ui-modal
+      [open]="activeModal() === 'create-account'"
+      title="Crear cuenta"
+      description="Añade una nueva cuenta financiera a tu dashboard."
+      size="sm"
+      (closed)="closeModal()"
+    >
+      <form class="space-y-4" [formGroup]="accountForm" (ngSubmit)="submitCreateAccount()">
+        <app-ui-input
+          label="Nombre de la cuenta"
+          type="text"
+          autocomplete="off"
+          formControlName="accountName"
+          placeholder="Cuenta principal"
+          [errorText]="accountNameError() ?? ''"
+        />
+
+        <div class="modal-action">
+          <app-ui-button variant="ghost" type="button" (onClick)="closeModal()">Cancelar</app-ui-button>
+          <app-ui-button type="submit" [loading]="createAccountBusy()">Crear cuenta</app-ui-button>
+        </div>
+      </form>
+    </app-ui-modal>
+
+    <app-ui-modal
+      [open]="activeModal() === 'create-transaction'"
+      title="Crear transacción"
+      description="Registra un ingreso o gasto en una de tus cuentas."
+      size="lg"
+      (closed)="closeModal()"
+    >
+      <form class="space-y-4" [formGroup]="transactionForm" (ngSubmit)="submitCreateTransaction()">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Cuenta</span>
+            </div>
+            <select
+              class="select w-full"
+              [class.select-error]="!!transactionControlError('accountId')"
+              formControlName="accountId"
+            >
+              @for (account of accounts(); track account.accountId) {
+                <option [ngValue]="account.accountId">
+                  {{ account.accountName }} · {{ account.balanceLabel }}
+                </option>
+              }
+            </select>
+            @if (transactionControlError('accountId')) {
+              <div class="label">
+                <span class="label-text-alt text-error">{{
+                  transactionControlError('accountId')
+                }}</span>
+              </div>
+            }
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text">Tipo</span>
+            </div>
+            <select class="select w-full" formControlName="transactionType">
+              <option [ngValue]="'expense'">Gasto</option>
+              <option [ngValue]="'income'">Ingreso</option>
+            </select>
+          </label>
+
+          <app-ui-input
+            label="Importe"
+            type="number"
+            [min]="0.01"
+            step="0.01"
+            formControlName="amount"
+            placeholder="1.00"
+            [errorText]="transactionControlError('amount') ?? ''"
+          />
+
+          <app-ui-input
+            label="Moneda"
+            type="text"
+            inputClass="uppercase"
+            [maxLength]="3"
+            formControlName="currency"
+            placeholder="USD"
+            [errorText]="transactionControlError('currency') ?? ''"
+          />
+
+          <app-ui-input
+            label="Fecha"
+            type="date"
+            formControlName="transactionDate"
+            [errorText]="transactionControlError('transactionDate') ?? ''"
+          />
+
+          <app-ui-input
+            label="ID de categoría"
+            type="number"
+            [min]="0"
+            step="1"
+            formControlName="transactionCategoryId"
+            placeholder="0"
+            [errorText]="transactionControlError('transactionCategoryId') ?? ''"
+          />
+        </div>
+
+        <label class="form-control w-full">
+          <div class="label">
+            <span class="label-text">Descripción</span>
+          </div>
+          <textarea
+            class="textarea w-full"
+            [class.textarea-error]="!!transactionControlError('description')"
+            formControlName="description"
+            rows="3"
+            placeholder="Descripción de la transacción"
+          ></textarea>
+          @if (transactionControlError('description')) {
+            <div class="label">
+              <span class="label-text-alt text-error">{{
+                transactionControlError('description')
+              }}</span>
+            </div>
+          }
+        </label>
+
+        <div class="modal-action">
+          <app-ui-button variant="ghost" type="button" (onClick)="closeModal()">Cancelar</app-ui-button>
+          <app-ui-button type="submit" [loading]="createTransactionBusy()">
+            Crear transacción
+          </app-ui-button>
+        </div>
+      </form>
+    </app-ui-modal>
   } @else {
     <div class="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
       <div class="flex h-full min-h-[24rem] flex-col items-center justify-center gap-3 text-center">

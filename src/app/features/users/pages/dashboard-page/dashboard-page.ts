@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgApexchartsModule, type ApexOptions } from 'ng-apexcharts';
 
 import { UiBadgeComponent } from '../../../../components/ui-badge/ui-badge';
 import { UiButtonComponent } from '../../../../components/ui-button/ui-button';
+import { UiInputComponent } from '../../../../components/ui-input/ui-input';
+import { UiModalComponent } from '../../../../components/ui-modal/ui-modal';
 import { AuthService } from '../../data-services/users-auth.service';
 import { LedgerSummaryService } from '../../data-services/ledger-summary.service';
 
@@ -36,6 +39,9 @@ type DashboardQuickAction = {
   kind: 'create-account' | 'create-transaction';
 };
 
+type DashboardModalKind = DashboardQuickAction['kind'];
+type TransactionType = 'income' | 'expense';
+
 type BalanceChartOptions = {
   chart: NonNullable<ApexOptions['chart']>;
   series: NonNullable<ApexOptions['series']>;
@@ -66,13 +72,22 @@ type CategoryExpenseChartOptions = {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule, UiBadgeComponent, UiButtonComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    NgApexchartsModule,
+    UiBadgeComponent,
+    UiButtonComponent,
+    UiInputComponent,
+    UiModalComponent,
+  ],
   templateUrl: './dashboard-page.html',
 })
 export class DashboardPageComponent {
   private readonly authService = inject(AuthService);
   private readonly ledgerSummaryService = inject(LedgerSummaryService);
   private readonly router = inject(Router);
+  private readonly formBuilder = inject(NonNullableFormBuilder);
 
   private readonly amountFormatter = new Intl.NumberFormat('es-ES', {
     minimumFractionDigits: 2,
@@ -88,10 +103,25 @@ export class DashboardPageComponent {
   readonly createTransactionBusy = signal(false);
   readonly createAccountFeedback = signal<string | null>(null);
   readonly createTransactionFeedback = signal<string | null>(null);
+  readonly activeModal = signal<DashboardModalKind | null>(null);
   readonly quickActions: DashboardQuickAction[] = [
     { label: 'Crear cuenta', variant: 'primary', kind: 'create-account' },
     { label: 'Crear transacción', variant: 'secondary', kind: 'create-transaction' },
   ];
+
+  readonly accountForm = this.formBuilder.group({
+    accountName: ['', [Validators.required]],
+  });
+
+  readonly transactionForm = this.formBuilder.group({
+    accountId: [0, [Validators.required, Validators.min(1)]],
+    amount: [1, [Validators.required, Validators.min(0.01)]],
+    currency: ['USD', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
+    transactionType: ['expense' as TransactionType, [Validators.required]],
+    transactionDate: [this.todayInputValue(), [Validators.required]],
+    description: ['', [Validators.required]],
+    transactionCategoryId: [0, [Validators.required, Validators.min(0)]],
+  });
 
   readonly welcomeTitle = computed(() => {
     const user = this.user();
@@ -276,13 +306,129 @@ export class DashboardPageComponent {
 
   handleQuickAction(action: DashboardQuickAction): void {
     if (action.kind === 'create-account') {
-      this.createAccount();
+      this.openCreateAccountModal();
       return;
     }
 
     if (action.kind === 'create-transaction') {
-      this.createTransaction();
+      this.openCreateTransactionModal();
     }
+  }
+
+  closeModal(): void {
+    if (this.createAccountBusy() || this.createTransactionBusy()) {
+      return;
+    }
+
+    this.activeModal.set(null);
+  }
+
+  submitCreateAccount(): void {
+    if (this.createAccountBusy()) {
+      return;
+    }
+
+    if (this.accountForm.invalid) {
+      this.accountForm.markAllAsTouched();
+      return;
+    }
+
+    const normalizedName = this.accountForm.controls.accountName.value.trim();
+
+    if (!normalizedName) {
+      this.accountForm.controls.accountName.setErrors({ required: true });
+      this.accountForm.markAllAsTouched();
+      return;
+    }
+
+    this.createAccountBusy.set(true);
+    this.createAccountFeedback.set(null);
+
+    this.ledgerSummaryService.createAccount(normalizedName).subscribe({
+      next: () => {
+        this.createAccountFeedback.set(`Cuenta "${normalizedName}" creada correctamente.`);
+        this.accountForm.reset({ accountName: '' });
+        this.activeModal.set(null);
+        this.refresh();
+      },
+      error: () => {
+        this.createAccountFeedback.set('No se ha podido crear la cuenta.');
+        this.createAccountBusy.set(false);
+      },
+      complete: () => {
+        this.createAccountBusy.set(false);
+      },
+    });
+  }
+
+  submitCreateTransaction(): void {
+    if (this.createTransactionBusy()) {
+      return;
+    }
+
+    if (this.transactionForm.invalid) {
+      this.transactionForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.transactionForm.getRawValue();
+    const account = this.accounts().find((entry) => entry.accountId === formValue.accountId);
+
+    if (!account) {
+      this.transactionForm.controls.accountId.setErrors({ min: true });
+      this.transactionForm.markAllAsTouched();
+      this.createTransactionFeedback.set('Selecciona una cuenta válida.');
+      return;
+    }
+
+    const normalizedCurrency = formValue.currency.trim().toUpperCase();
+    const description = formValue.description.trim();
+
+    if (!normalizedCurrency) {
+      this.transactionForm.controls.currency.setErrors({ required: true });
+      this.transactionForm.markAllAsTouched();
+      return;
+    }
+
+    if (!description) {
+      this.transactionForm.controls.description.setErrors({ required: true });
+      this.transactionForm.markAllAsTouched();
+      return;
+    }
+
+    if (!Number.isInteger(formValue.transactionCategoryId)) {
+      this.transactionForm.controls.transactionCategoryId.setErrors({ integer: true });
+      this.transactionForm.markAllAsTouched();
+      return;
+    }
+
+    this.createTransactionBusy.set(true);
+    this.createTransactionFeedback.set(null);
+
+    this.ledgerSummaryService
+      .createTransaction(account.accountId, {
+        amount: formValue.amount,
+        currency: normalizedCurrency,
+        transaction_type: formValue.transactionType,
+        transaction_date: this.toIsoDate(formValue.transactionDate),
+        description,
+        transaction_category_id: formValue.transactionCategoryId,
+      })
+      .subscribe({
+        next: () => {
+          this.createTransactionFeedback.set(`Transacción creada en "${account.accountName}".`);
+          this.resetTransactionForm();
+          this.activeModal.set(null);
+          this.refresh();
+        },
+        error: () => {
+          this.createTransactionFeedback.set('No se ha podido crear la transacción.');
+          this.createTransactionBusy.set(false);
+        },
+        complete: () => {
+          this.createTransactionBusy.set(false);
+        },
+      });
   }
 
   logout(): void {
@@ -297,6 +443,66 @@ export class DashboardPageComponent {
     return `${value < 0 ? '-' : ''}€${this.amountFormatter.format(Math.abs(value))}`;
   }
 
+  accountNameError(): string | null {
+    const control = this.accountForm.controls.accountName;
+
+    if (!control.touched && !control.dirty) {
+      return null;
+    }
+
+    if (control.hasError('required')) {
+      return 'Escribe un nombre para la cuenta.';
+    }
+
+    return null;
+  }
+
+  transactionControlError(
+    controlName:
+      | 'accountId'
+      | 'amount'
+      | 'currency'
+      | 'transactionType'
+      | 'transactionDate'
+      | 'description'
+      | 'transactionCategoryId',
+  ): string | null {
+    const control = this.transactionForm.controls[controlName];
+
+    if (!control.touched && !control.dirty) {
+      return null;
+    }
+
+    if (control.hasError('required')) {
+      return 'Este campo es obligatorio.';
+    }
+
+    if (controlName === 'accountId' && control.hasError('min')) {
+      return 'Selecciona una cuenta válida.';
+    }
+
+    if (controlName === 'amount' && control.hasError('min')) {
+      return 'Introduce un importe mayor que cero.';
+    }
+
+    if (
+      controlName === 'currency' &&
+      (control.hasError('minlength') || control.hasError('maxlength'))
+    ) {
+      return 'Usa un código de moneda de 3 letras.';
+    }
+
+    if (controlName === 'transactionCategoryId' && control.hasError('min')) {
+      return 'El ID de categoría debe ser mayor o igual que cero.';
+    }
+
+    if (controlName === 'transactionCategoryId' && control.hasError('integer')) {
+      return 'El ID de categoría debe ser un número entero.';
+    }
+
+    return null;
+  }
+
   private getCategoryNames(accounts: DashboardAccountViewModel[]): string[] {
     return Array.from(
       new Set(accounts.flatMap((account) => account.expensesByCategory.map((category) => category.categoryName))),
@@ -309,167 +515,45 @@ export class DashboardPageComponent {
     });
   }
 
-  private createAccount(): void {
-    if (this.createAccountBusy()) {
-      return;
-    }
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const accountName = window.prompt('Nombre de la cuenta');
-
-    if (accountName === null) {
-      return;
-    }
-
-    const normalizedName = accountName.trim();
-
-    if (!normalizedName) {
-      this.createAccountFeedback.set('Escribe un nombre para la cuenta.');
-      return;
-    }
-
-    this.createAccountBusy.set(true);
+  private openCreateAccountModal(): void {
     this.createAccountFeedback.set(null);
-
-    this.ledgerSummaryService.createAccount(normalizedName).subscribe({
-      next: () => {
-        this.createAccountFeedback.set(`Cuenta "${normalizedName}" creada correctamente.`);
-        this.refresh();
-      },
-      error: () => {
-        this.createAccountFeedback.set('No se ha podido crear la cuenta.');
-        this.createAccountBusy.set(false);
-      },
-      complete: () => {
-        this.createAccountBusy.set(false);
-      },
-      });
+    this.accountForm.reset({ accountName: '' });
+    this.activeModal.set('create-account');
   }
 
-  private createTransaction(): void {
-    if (this.createTransactionBusy()) {
-      return;
-    }
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
+  private openCreateTransactionModal(): void {
     const accounts = this.accounts();
-    const account = this.selectAccountForTransaction(accounts);
 
-    if (!account) {
+    if (!accounts.length) {
       this.createTransactionFeedback.set('No hay una cuenta válida para crear la transacción.');
       return;
     }
 
-    const amountInput = window.prompt('Importe de la transacción', '1');
-
-    if (amountInput === null) {
-      return;
-    }
-
-    const amount = Number(amountInput.replace(',', '.'));
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      this.createTransactionFeedback.set('Introduce un importe válido mayor que cero.');
-      return;
-    }
-
-    const description = window.prompt('Descripción de la transacción', 'string');
-
-    if (description === null) {
-      return;
-    }
-
-    const categoryInput = window.prompt('ID de categoría', '0');
-
-    if (categoryInput === null) {
-      return;
-    }
-
-    const transactionCategoryId = Number.parseInt(categoryInput, 10);
-
-    if (!Number.isInteger(transactionCategoryId) || transactionCategoryId < 0) {
-      this.createTransactionFeedback.set('El ID de categoría debe ser un número entero mayor o igual que cero.');
-      return;
-    }
-
-    const transactionTypeInput = window.prompt('Tipo de transacción', 'expense');
-
-    if (transactionTypeInput === null) {
-      return;
-    }
-
-    const normalizedType = transactionTypeInput.trim().toLowerCase();
-
-    if (normalizedType !== 'expense' && normalizedType !== 'income') {
-      this.createTransactionFeedback.set('El tipo de transacción debe ser "expense" o "income".');
-      return;
-    }
-
-    this.createTransactionBusy.set(true);
     this.createTransactionFeedback.set(null);
-
-    this.ledgerSummaryService
-      .createTransaction(account.accountId, {
-        amount,
-        currency: 'USD',
-        transaction_type: normalizedType,
-        transaction_date: new Date().toISOString(),
-        description: description.trim() || 'string',
-        transaction_category_id: transactionCategoryId,
-      })
-      .subscribe({
-        next: () => {
-          this.createTransactionFeedback.set(`Transacción creada en "${account.accountName}".`);
-          this.refresh();
-        },
-        error: () => {
-          this.createTransactionFeedback.set('No se ha podido crear la transacción.');
-          this.createTransactionBusy.set(false);
-        },
-        complete: () => {
-          this.createTransactionBusy.set(false);
-        },
-      });
+    this.resetTransactionForm(accounts[0]?.accountId ?? 0);
+    this.activeModal.set('create-transaction');
   }
 
-  private selectAccountForTransaction(accounts: DashboardAccountViewModel[]): DashboardAccountViewModel | null {
-    if (!accounts.length) {
-      return null;
-    }
+  private resetTransactionForm(accountId = this.accounts()[0]?.accountId ?? 0): void {
+    this.transactionForm.reset({
+      accountId,
+      amount: 1,
+      currency: 'USD',
+      transactionType: 'expense',
+      transactionDate: this.todayInputValue(),
+      description: '',
+      transactionCategoryId: 0,
+    });
+  }
 
-    if (accounts.length === 1) {
-      return accounts[0];
-    }
+  private todayInputValue(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
 
-    const selection = window.prompt(
-      [
-        'Elige la cuenta para la transacción:',
-        ...accounts.map(
-          (account, index) => `${index + 1}. ${account.accountName} (${this.formatMoney(account.balance)})`,
-        ),
-        'Escribe el número de la cuenta.',
-      ].join('\n'),
-      '1',
-    );
+  private toIsoDate(dateValue: string): string {
+    const parsedDate = new Date(`${dateValue}T00:00:00`);
 
-    if (selection === null) {
-      return null;
-    }
-
-    const selectedIndex = Number.parseInt(selection.trim(), 10) - 1;
-
-    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= accounts.length) {
-      this.createTransactionFeedback.set('Selecciona un número de cuenta válido.');
-      return null;
-    }
-
-    return accounts[selectedIndex] ?? null;
+    return Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
   }
 
   private mapCategories(

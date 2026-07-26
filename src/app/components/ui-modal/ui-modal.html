@@ -1,0 +1,43 @@
+@if (open) {
+  <div
+    class="modal modal-open modal-middle"
+    role="dialog"
+    aria-modal="true"
+    tabindex="0"
+    (keydown.escape)="close()"
+  >
+    <div [class]="modalBoxClasses">
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          @if (title) {
+            <h2 class="text-xl font-semibold text-base-content">{{ title }}</h2>
+          }
+
+          @if (description) {
+            <p class="mt-1 text-sm leading-6 text-base-content/70">{{ description }}</p>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm btn-circle shrink-0"
+          aria-label="Cerrar modal"
+          (click)="close()"
+        >
+          x
+        </button>
+      </div>
+
+      <ng-content></ng-content>
+    </div>
+
+    <button
+      type="button"
+      class="modal-backdrop"
+      aria-label="Cerrar modal"
+      (click)="closeFromBackdrop()"
+    >
+      close
+    </button>
+  </div>
+}
