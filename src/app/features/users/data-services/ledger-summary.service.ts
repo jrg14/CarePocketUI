@@ -6,13 +6,13 @@ import { environment } from '../../../../environments/environment';
 
 import { usersApiEndpoints } from './users-api-endpoints';
 import {
-  LedgerSummaryAccountViewModel,
-  LedgerSummaryAccountSchema,
-  LedgerSummaryCategoryViewModel,
-  LedgerSummaryCategorySchema,
+  LedgerSummaryBalanceChangeSchema,
+  LedgerSummaryBalanceChangeViewModel,
+  LedgerSummaryLatestTransactionSchema,
+  LedgerSummaryLatestTransactionViewModel,
   LedgerSummarySchema,
-  LedgerSummaryTotalsSchema,
-  LedgerSummaryTotalsViewModel,
+  LedgerSummaryTopExpenseCategorySchema,
+  LedgerSummaryTopExpenseCategoryViewModel,
   LedgerSummaryViewModel,
 } from '../models/ledger-summary.models';
 
@@ -45,7 +45,7 @@ export class LedgerSummaryService {
       return throwError(() => new Error('La cuenta no es válida.'));
     }
 
-    return this.http.post<void>(this.apiUrl(`/api/v1/ledgers/account/${accountId}/transactions`), payload);
+    return this.http.post<void>(this.apiUrl(`/api/v1/ledgers/accounts/${accountId}/transactions`), payload);
   }
 
   createAccount(accountName: string): Observable<void> {
@@ -97,23 +97,26 @@ export class LedgerSummaryService {
 
   private mapSummary(response: LedgerSummarySchema): LedgerSummaryViewModel {
     return {
-      totals: this.mapTotals(response.totals),
-      accounts: response.accounts.map((account) => this.mapAccount(account)),
+      balance: this.toNumber(response.balance),
+      balanceChange: this.mapBalanceChange(response.balance_change),
+      monthlyHealth: this.toNumber(response.monthly_health),
+      topExpenseCategories: response.top_expense_categories.map((category) => this.mapTopExpenseCategory(category)),
+      latestTransactions: response.latest_transactions.map((transaction) => this.mapLatestTransaction(transaction)),
     };
   }
 
-  private mapAccount(account: LedgerSummaryAccountSchema): LedgerSummaryAccountViewModel {
+  private mapBalanceChange(
+    balanceChange: LedgerSummaryBalanceChangeSchema,
+  ): LedgerSummaryBalanceChangeViewModel {
     return {
-      accountId: account.account_id,
-      accountName: account.account_name,
-      balance: this.toNumber(account.balance),
-      income: this.toNumber(account.income),
-      expense: this.toNumber(account.expense),
-      expensesByCategory: account.expenses_by_category.map((category) => this.mapCategory(category)),
+      percentage: this.toNumber(balanceChange.percentage),
+      direction: balanceChange.direction,
     };
   }
 
-  private mapCategory(category: LedgerSummaryCategorySchema): LedgerSummaryCategoryViewModel {
+  private mapTopExpenseCategory(
+    category: LedgerSummaryTopExpenseCategorySchema,
+  ): LedgerSummaryTopExpenseCategoryViewModel {
     return {
       categoryId: category.category_id,
       categoryName: category.category_name,
@@ -121,12 +124,17 @@ export class LedgerSummaryService {
     };
   }
 
-  private mapTotals(totals: LedgerSummaryTotalsSchema): LedgerSummaryTotalsViewModel {
+  private mapLatestTransaction(
+    transaction: LedgerSummaryLatestTransactionSchema,
+  ): LedgerSummaryLatestTransactionViewModel {
     return {
-      balance: this.toNumber(totals.balance),
-      income: this.toNumber(totals.income),
-      expense: this.toNumber(totals.expense),
-      expensesByCategory: totals.expenses_by_category.map((category) => this.mapCategory(category)),
+      transactionId: transaction.transaction_id,
+      amount: this.toNumber(transaction.amount),
+      currency: transaction.currency,
+      transactionType: transaction.transaction_type,
+      transactionDate: transaction.transaction_date,
+      description: transaction.description,
+      transactionCategoryId: transaction.transaction_category_id,
     };
   }
 

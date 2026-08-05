@@ -1,55 +1,59 @@
 export type LedgerDecimalValue = string | number;
 
-export interface LedgerSummaryCategorySchema {
+export interface LedgerSummaryBalanceChangeSchema {
+  percentage: LedgerDecimalValue;
+  direction: 'improvement' | 'decline';
+}
+
+export interface LedgerSummaryTopExpenseCategorySchema {
   category_id: number | null;
   category_name: string;
   amount: LedgerDecimalValue;
 }
 
-export interface LedgerSummaryAccountSchema {
-  account_id: number;
-  account_name: string;
-  balance: LedgerDecimalValue;
-  income: LedgerDecimalValue;
-  expense: LedgerDecimalValue;
-  expenses_by_category: LedgerSummaryCategorySchema[];
-}
-
-export interface LedgerSummaryTotalsSchema {
-  balance: LedgerDecimalValue;
-  income: LedgerDecimalValue;
-  expense: LedgerDecimalValue;
-  expenses_by_category: LedgerSummaryCategorySchema[];
+export interface LedgerSummaryLatestTransactionSchema {
+  transaction_id: number;
+  amount: LedgerDecimalValue;
+  currency: string;
+  transaction_type: 'income' | 'expense';
+  transaction_date: string;
+  description: string;
+  transaction_category_id: number | null;
 }
 
 export interface LedgerSummarySchema {
-  totals: LedgerSummaryTotalsSchema;
-  accounts: LedgerSummaryAccountSchema[];
+  balance: LedgerDecimalValue;
+  balance_change: LedgerSummaryBalanceChangeSchema;
+  monthly_health: LedgerDecimalValue;
+  top_expense_categories: LedgerSummaryTopExpenseCategorySchema[];
+  latest_transactions: LedgerSummaryLatestTransactionSchema[];
 }
 
-export interface LedgerSummaryAccountViewModel {
-  accountId: number;
-  accountName: string;
-  balance: number;
-  income: number;
-  expense: number;
-  expensesByCategory: LedgerSummaryCategoryViewModel[];
+export interface LedgerSummaryBalanceChangeViewModel {
+  percentage: number;
+  direction: 'improvement' | 'decline';
 }
 
-export interface LedgerSummaryCategoryViewModel {
+export interface LedgerSummaryTopExpenseCategoryViewModel {
   categoryId: number | null;
   categoryName: string;
   amount: number;
 }
 
-export interface LedgerSummaryTotalsViewModel {
-  balance: number;
-  income: number;
-  expense: number;
-  expensesByCategory: LedgerSummaryCategoryViewModel[];
+export interface LedgerSummaryLatestTransactionViewModel {
+  transactionId: number;
+  amount: number;
+  currency: string;
+  transactionType: 'income' | 'expense';
+  transactionDate: string;
+  description: string;
+  transactionCategoryId: number | null;
 }
 
 export interface LedgerSummaryViewModel {
-  totals: LedgerSummaryTotalsViewModel;
-  accounts: LedgerSummaryAccountViewModel[];
+  balance: number;
+  balanceChange: LedgerSummaryBalanceChangeViewModel;
+  monthlyHealth: number;
+  topExpenseCategories: LedgerSummaryTopExpenseCategoryViewModel[];
+  latestTransactions: LedgerSummaryLatestTransactionViewModel[];
 }

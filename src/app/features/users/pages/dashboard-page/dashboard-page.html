@@ -1,4 +1,4 @@
-<div class="space-y-8">
+<div class="mx-auto max-w-md space-y-5 px-3 py-4 sm:max-w-2xl sm:px-4 lg:max-w-5xl">
   @if (error()) {
     <div role="alert" class="alert alert-error">
       <span>{{ error() }}</span>
@@ -6,144 +6,151 @@
   }
 
   @if (summary(); as currentSummary) {
-    <section class="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm sm:p-6">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-semibold text-base-content">Balance total cuentas</h2>
-          <p class="text-sm text-base-content/60">
-            El donut muestra ingresos y gastos separados por cuenta.
-          </p>
-        </div>
-        <app-ui-badge variant="primary">Donut por cuentas</app-ui-badge>
+    <div>
+      <p class="text-sm font-semibold text-slate-900">Overview</p>
+      <p class="text-xs text-slate-500">Hola, {{ firstName(user()?.fullName) }}!</p>
+      <p class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Your Money</p>
+    </div>
+    <header
+      class="rounded-[2rem] bg-white/80 p-4 shadow-[0_16px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70 backdrop-blur sm:p-5"
+    >
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3"></div>
       </div>
 
-      @if (accounts().length) {
-        <div class="rounded-[2rem] bg-amber-100/70 p-4 shadow-inner ring-1 ring-amber-200/70">
-          <div class="relative mx-auto max-w-[30rem]">
-            <apx-chart
-              [chart]="balanceChartOptions().chart"
-              [series]="balanceChartOptions().series"
-              [labels]="balanceChartOptions().labels"
-              [colors]="balanceChartOptions().colors"
-              [stroke]="balanceChartOptions().stroke"
-              [dataLabels]="balanceChartOptions().dataLabels"
-              [legend]="balanceChartOptions().legend"
-              [plotOptions]="balanceChartOptions().plotOptions"
-              [tooltip]="balanceChartOptions().tooltip"
-              [responsive]="balanceChartOptions().responsive"
-            ></apx-chart>
-
-            <div
-              class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
-            >
-              <p class="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/45">
-                Balance total cuentas
-              </p>
-              <p class="mt-2 text-3xl font-black tracking-tight text-base-content">
-                {{ formatMoney(currentSummary.totals.balance) }}
-              </p>
-              <p class="mt-1 text-sm text-base-content/60">Ingresos - gastos</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-2xl bg-base-100 p-4 shadow-sm ring-1 ring-base-200/80">
-          <div class="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 class="text-lg font-semibold text-base-content">Gasto por categoría</h2>
-              <p class="text-sm text-base-content/60">
-                Cada fila compara la misma categoría entre cuentas.
-              </p>
-            </div>
-            <app-ui-badge variant="info">Stacked horizontal</app-ui-badge>
-          </div>
-
-          @if (categoryExpenseChartOptions().series.length) {
-            <apx-chart
-              [chart]="categoryExpenseChartOptions().chart"
-              [series]="categoryExpenseChartOptions().series"
-              [colors]="categoryExpenseChartOptions().colors"
-              [plotOptions]="categoryExpenseChartOptions().plotOptions"
-              [dataLabels]="categoryExpenseChartOptions().dataLabels"
-              [xaxis]="categoryExpenseChartOptions().xaxis"
-              [yaxis]="categoryExpenseChartOptions().yaxis"
-              [grid]="categoryExpenseChartOptions().grid"
-              [tooltip]="categoryExpenseChartOptions().tooltip"
-              [legend]="categoryExpenseChartOptions().legend"
-              [responsive]="categoryExpenseChartOptions().responsive"
-            ></apx-chart>
-          } @else {
-            <div class="alert alert-info">
-              <span>No hay categorías de gasto para este resumen.</span>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="alert alert-info">
-          <span>Aún no hay cuentas para mostrar en el dashboard.</span>
-        </div>
-      }
-    </section>
-
-    <section class="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm sm:p-6">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-semibold text-base-content">Acciones rápidas</h2>
-          <p class="text-sm text-base-content/60">
-            Botones temporales para completar el flujo visual del dashboard.
+      <div class="mt-5 space-y-4">
+        <article class="p-4">
+          <p class="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-slate-500">
+            Total Balance
           </p>
-        </div>
-        <app-ui-badge variant="neutral">Temporal</app-ui-badge>
-      </div>
-
-      <div class="grid gap-3 sm:grid-cols-3">
-        @for (action of quickActions; track action.label) {
-          <app-ui-button
-            [variant]="action.variant"
-            size="lg"
-            [fullWidth]="true"
-            [loading]="
-              (action.kind === 'create-account' && createAccountBusy()) ||
-              (action.kind === 'create-transaction' && createTransactionBusy())
-            "
-            (onClick)="handleQuickAction(action)"
+          <p class="mt-2 text-3xl font-black tracking-tight text-sky-600">
+            {{ formatMoney(currentSummary.balance) }}
+          </p>
+          <div
+            class="mt-3 rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-700"
           >
-            {{ action.label }}
-          </app-ui-button>
+            {{ currentSummary.balanceChange.direction === 'improvement' ? '+' : '-'
+            }}{{ formatPercent(currentSummary.balanceChange.percentage) }} this month
+          </div>
+        </article>
+        <hr class="my-6 border-t-2 border-slate-200" />
+        <article class="p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-slate-900">Monthly Health</p>
+              <p class="mt-1 text-xs text-slate-500">
+                You spent {{ 100 - currentSummary.monthlyHealth | number: '1.0-0' }}% of your
+                budget.
+              </p>
+            </div>
+            <p class="text-sm font-bold text-sky-600">
+              {{ formatPercent(currentSummary.monthlyHealth) }} left
+            </p>
+          </div>
+
+          <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div
+              class="h-full rounded-full bg-sky-500"
+              [style.width.%]="currentSummary.monthlyHealth"
+            ></div>
+          </div>
+        </article>
+      </div>
+    </header>
+
+    <section class="space-y-3">
+      <div class="flex items-end justify-between gap-3 px-1">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Top Categories</h2>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        @for (category of topExpenseCategories(); track category.categoryName) {
+          <article class="rounded-[1.25rem] bg-white p-3 shadow-sm ring-1 ring-slate-200/70">
+            <div class="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 text-lg">
+              @if (category.categoryName === 'Supermercado') {
+                🥗
+              } @else if (category.categoryName === 'Restaurantes') {
+                🍽️
+              } @else if (category.categoryName === 'Transporte') {
+                🚕
+              } @else {
+                💳
+              }
+            </div>
+            <p class="mt-3 text-sm font-semibold text-slate-900">{{ category.categoryName }}</p>
+            <p class="mt-1 text-lg font-black text-slate-900">{{ category.amountLabel }}</p>
+          </article>
         }
       </div>
+    </section>
 
-      @if (createAccountFeedback() || createTransactionFeedback()) {
-        <div class="mt-4 space-y-2">
-          @if (createAccountFeedback()) {
-            <div class="alert alert-info">
-              <span>{{ createAccountFeedback() }}</span>
-            </div>
-          }
-
-          @if (createTransactionFeedback()) {
-            <div class="alert alert-info">
-              <span>{{ createTransactionFeedback() }}</span>
-            </div>
-          }
+    <section
+      class="rounded-[1.75rem] bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] ring-1 ring-slate-200/70"
+    >
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Recent</h2>
         </div>
-      }
+        <span class="text-sm font-semibold text-sky-600">See all</span>
+      </div>
+
+      <div class="space-y-3">
+        @for (transaction of latestTransactions(); track transaction.transactionId) {
+          <article class="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+            <div
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200"
+            >
+              @if (transaction.transactionType === 'income') {
+                ⬆
+              } @else if (transaction.transactionCategoryId === 4) {
+                🛒
+              } @else if (transaction.transactionCategoryId === 2) {
+                🍔
+              } @else if (transaction.transactionCategoryId === 7) {
+                🚗
+              } @else {
+                •
+              }
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-slate-900">
+                {{ transaction.description }}
+              </p>
+              <p class="text-xs text-slate-500">
+                {{ transaction.transactionDate | date: 'EEEE' }}
+              </p>
+            </div>
+
+            <div class="text-right">
+              <p
+                class="text-sm font-black"
+                [class.text-emerald-600]="transaction.transactionType === 'income'"
+                [class.text-slate-900]="transaction.transactionType === 'expense'"
+              >
+                {{ transaction.transactionType === 'income' ? '+' : '-'
+                }}{{ transaction.amountLabel }}
+              </p>
+              <p
+                class="text-[0.7rem] font-semibold uppercase tracking-[0.18em]"
+                [class.text-emerald-600]="transaction.transactionType === 'income'"
+                [class.text-rose-500]="transaction.transactionType === 'expense'"
+              >
+                {{ transaction.typeLabel }}
+              </p>
+            </div>
+          </article>
+        }
+      </div>
     </section>
   } @else {
     <div class="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
       <div class="flex h-full min-h-[24rem] flex-col items-center justify-center gap-3 text-center">
         <span class="loading loading-spinner loading-lg text-primary"></span>
         <p class="text-sm font-medium text-base-content">Cargando el resumen del dashboard...</p>
-        <p class="max-w-sm text-sm leading-6 text-base-content/60">
-          Estamos llamando a <code>/api/v1/ledgers/summary</code> para construir tu resumen general.
-        </p>
       </div>
     </div>
   }
-
-  <div class="flex justify-end">
-    <app-ui-button variant="ghost" [loading]="authBusy()" (onClick)="logout()"
-      >Cerrar sesión</app-ui-button
-    >
-  </div>
 </div>
